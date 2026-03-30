@@ -3,2121 +3,946 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BorrowBox — Predictive Reservation Analytics System</title>
-<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<title>BorrowBox QR Inventory System — Solution Prototype</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
-  :root {
-    --teal: #1a7a6e;
-    --teal-light: #23a99a;
-    --teal-dark: #0d4d44;
-    --amber: #f59e0b;
-    --amber-light: #fbbf24;
-    --red: #dc2626;
-    --red-light: #ef4444;
-    --green: #16a34a;
-    --green-light: #22c55e;
-    --navy: #0f1f2e;
-    --navy-mid: #1a3148;
-    --slate: #334155;
-    --bg: #f0f4f3;
-    --card: #ffffff;
-    --text: #0f1f2e;
-    --muted: #64748b;
-    --border: #d1fae5;
-  }
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --black:#0a0a0a;--dark:#1a1a1a;--dark2:#2d2d2d;--mid:#555;
+  --muted:#888;--light:#ccc;--border:#e0e0e0;--bg:#f5f5f5;
+  --bg2:#ebebeb;--card:#fff;--white:#fff;
+}
+html{scroll-behavior:smooth}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--dark);-webkit-font-smoothing:antialiased;min-height:100vh}
 
-  * { margin: 0; padding: 0; box-sizing: border-box; }
+/* ── LAYOUT ── */
+.app{display:flex;min-height:100vh}
+.sidebar{width:230px;background:var(--black);flex-shrink:0;display:flex;flex-direction:column;position:fixed;top:0;left:0;bottom:0;z-index:200;overflow-y:auto}
+.main-area{margin-left:230px;flex:1;display:flex;flex-direction:column;min-height:100vh}
+.topbar{background:var(--white);border-bottom:1px solid var(--border);height:54px;display:flex;align-items:center;justify-content:space-between;padding:0 28px;position:sticky;top:0;z-index:100;box-shadow:0 1px 4px rgba(0,0,0,.05)}
+.page-content{padding:28px;flex:1}
 
-  body {
-    font-family: 'DM Sans', sans-serif;
-    background: var(--bg);
-    color: var(--text);
-    overflow-x: hidden;
-  }
+/* ── SIDEBAR ── */
+.sb-brand{padding:22px 18px 18px;border-bottom:1px solid rgba(255,255,255,.07)}
+.sb-logo{font-size:15px;font-weight:800;color:var(--white);letter-spacing:-.2px}
+.sb-sub{font-size:10px;color:rgba(255,255,255,.3);font-family:'JetBrains Mono',monospace;margin-top:2px;letter-spacing:.3px}
+.sb-section{padding:14px 12px 4px}
+.sb-sec-label{font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:rgba(255,255,255,.25);padding:0 6px;margin-bottom:4px}
+.sb-item{display:flex;align-items:center;gap:9px;padding:9px 10px;border-radius:6px;cursor:pointer;color:rgba(255,255,255,.45);font-size:12.5px;font-weight:500;transition:all .15s;margin-bottom:1px;border:none;background:none;width:100%;text-align:left;font-family:'Inter',sans-serif}
+.sb-item:hover{background:rgba(255,255,255,.06);color:rgba(255,255,255,.8)}
+.sb-item.active{background:var(--white);color:var(--black);font-weight:700}
+.sb-ico{width:15px;height:15px;flex-shrink:0}
+.sb-footer{padding:14px 16px;border-top:1px solid rgba(255,255,255,.07);margin-top:auto;font-size:10px;color:rgba(255,255,255,.2);font-family:'JetBrains Mono',monospace;line-height:1.6}
 
-  /* ─── NAV ─── */
-  nav {
-    background: var(--navy);
-    padding: 0 2rem;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    height: 64px;
-    position: sticky;
-    top: 0;
-    z-index: 1000;
-    box-shadow: 0 2px 24px rgba(0,0,0,0.3);
-  }
-  .nav-brand {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    font-family: 'Syne', sans-serif;
-    font-weight: 800;
-    font-size: 1.25rem;
-    color: white;
-    letter-spacing: -0.5px;
-  }
-  .nav-logo {
-    width: 36px; height: 36px;
-    background: var(--teal);
-    border-radius: 8px;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 1.2rem;
-  }
-  .nav-tabs {
-    display: flex;
-    gap: 4px;
-  }
-  .nav-tab {
-    padding: 6px 16px;
-    border-radius: 6px;
-    cursor: pointer;
-    font-size: 0.85rem;
-    font-weight: 500;
-    color: rgba(255,255,255,0.6);
-    transition: all 0.2s;
-    border: none;
-    background: transparent;
-    font-family: 'DM Sans', sans-serif;
-  }
-  .nav-tab:hover { color: white; background: rgba(255,255,255,0.08); }
-  .nav-tab.active { color: white; background: var(--teal); }
-  .nav-badge {
-    background: var(--amber);
-    color: var(--navy);
-    font-size: 0.7rem;
-    font-weight: 700;
-    padding: 2px 8px;
-    border-radius: 20px;
-    font-family: 'DM Mono', monospace;
-  }
+/* ── TOPBAR ── */
+.tb-title{font-size:13.5px;font-weight:700;color:var(--dark)}
+.tb-right{display:flex;align-items:center;gap:10px}
+.view-toggle{display:flex;border:1px solid var(--border);border-radius:6px;overflow:hidden}
+.vt-btn{padding:5px 14px;font-size:12px;font-weight:600;cursor:pointer;border:none;background:none;font-family:'Inter',sans-serif;color:var(--muted);transition:all .15s}
+.vt-btn.active{background:var(--dark);color:var(--white)}
+.tb-badge{background:var(--bg2);border-radius:4px;padding:3px 10px;font-size:11px;font-weight:600;font-family:'JetBrains Mono',monospace;color:var(--mid)}
 
-  /* ─── PAGES ─── */
-  .page { display: none; animation: fadeIn 0.4s ease; }
-  .page.active { display: block; }
-  @keyframes fadeIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+/* ── PAGES ── */
+.page{display:none;animation:fu .22s ease}
+.page.active{display:block}
+@keyframes fu{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
 
-  /* ─── HERO ─── */
-  .hero {
-    background: linear-gradient(135deg, var(--navy) 0%, var(--teal-dark) 60%, var(--teal) 100%);
-    padding: 80px 2rem 60px;
-    text-align: center;
-    position: relative;
-    overflow: hidden;
-  }
-  .hero::before {
-    content: '';
-    position: absolute;
-    top: -50%;
-    left: -20%;
-    width: 140%;
-    height: 200%;
-    background: radial-gradient(ellipse at 60% 40%, rgba(26,122,110,0.3) 0%, transparent 70%);
-    pointer-events: none;
-  }
-  .hero-tag {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    background: rgba(255,255,255,0.1);
-    border: 1px solid rgba(255,255,255,0.2);
-    border-radius: 20px;
-    padding: 6px 16px;
-    font-size: 0.8rem;
-    color: rgba(255,255,255,0.8);
-    margin-bottom: 24px;
-    font-family: 'DM Mono', monospace;
-    letter-spacing: 0.5px;
-  }
-  .hero h1 {
-    font-family: 'Syne', sans-serif;
-    font-size: 3.5rem;
-    font-weight: 800;
-    color: white;
-    line-height: 1.1;
-    margin-bottom: 16px;
-    letter-spacing: -1px;
-  }
-  .hero h1 span { color: var(--amber); }
-  .hero p {
-    font-size: 1.15rem;
-    color: rgba(255,255,255,0.75);
-    max-width: 600px;
-    margin: 0 auto 40px;
-    line-height: 1.7;
-  }
-  .hero-stats {
-    display: flex;
-    justify-content: center;
-    gap: 2px;
-    flex-wrap: wrap;
-    margin-bottom: 40px;
-  }
-  .hero-stat {
-    background: rgba(255,255,255,0.08);
-    border: 1px solid rgba(255,255,255,0.15);
-    border-radius: 12px;
-    padding: 20px 28px;
-    text-align: center;
-    min-width: 130px;
-  }
-  .hero-stat-num {
-    font-family: 'Syne', sans-serif;
-    font-size: 2rem;
-    font-weight: 800;
-    color: white;
-    display: block;
-  }
-  .hero-stat-num.red { color: #f87171; }
-  .hero-stat-num.amber { color: var(--amber); }
-  .hero-stat-num.green { color: #4ade80; }
-  .hero-stat-label {
-    font-size: 0.75rem;
-    color: rgba(255,255,255,0.55);
-    margin-top: 4px;
-    display: block;
-    font-family: 'DM Mono', monospace;
-    letter-spacing: 0.5px;
-  }
-  .hero-cta {
-    display: flex;
-    gap: 12px;
-    justify-content: center;
-    flex-wrap: wrap;
-  }
-  .btn {
-    padding: 12px 28px;
-    border-radius: 8px;
-    font-size: 0.9rem;
-    font-weight: 600;
-    cursor: pointer;
-    border: none;
-    font-family: 'DM Sans', sans-serif;
-    transition: all 0.2s;
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-  }
-  .btn-primary { background: var(--teal); color: white; }
-  .btn-primary:hover { background: var(--teal-light); transform: translateY(-1px); box-shadow: 0 8px 20px rgba(26,122,110,0.4); }
-  .btn-outline { background: transparent; color: white; border: 1.5px solid rgba(255,255,255,0.4); }
-  .btn-outline:hover { background: rgba(255,255,255,0.1); border-color: white; }
-  .btn-amber { background: var(--amber); color: var(--navy); }
-  .btn-amber:hover { background: var(--amber-light); transform: translateY(-1px); }
-  .btn-sm { padding: 8px 16px; font-size: 0.8rem; }
-  .btn-red { background: var(--red); color: white; }
-  .btn-red:hover { background: var(--red-light); }
-  .btn-green { background: var(--green); color: white; }
-  .btn-green:hover { background: var(--green-light); }
+/* ── TYPE ── */
+.page-title{font-size:18px;font-weight:800;letter-spacing:-.3px;color:var(--black)}
+.page-sub{font-size:12.5px;color:var(--muted);margin-top:3px}
+.ph{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:22px}
 
-  /* ─── STORY SECTIONS ─── */
-  .story-section {
-    padding: 60px 2rem;
-    max-width: 1200px;
-    margin: 0 auto;
-  }
-  .section-header {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-    margin-bottom: 8px;
-  }
-  .section-num {
-    width: 44px; height: 44px;
-    background: var(--teal);
-    border-radius: 10px;
-    display: flex; align-items: center; justify-content: center;
-    font-family: 'Syne', sans-serif;
-    font-size: 1.1rem;
-    font-weight: 800;
-    color: white;
-    flex-shrink: 0;
-  }
-  .section-title {
-    font-family: 'Syne', sans-serif;
-    font-size: 1.8rem;
-    font-weight: 700;
-    color: var(--navy);
-  }
-  .section-subtitle {
-    color: var(--muted);
-    font-size: 0.95rem;
-    margin-bottom: 32px;
-    padding-left: 60px;
-  }
+/* ── CARDS ── */
+.card{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:20px;box-shadow:0 1px 3px rgba(0,0,0,.04)}
+.card-title{font-size:12.5px;font-weight:700;color:var(--black);margin-bottom:2px}
+.card-sub{font-size:11.5px;color:var(--muted);margin-bottom:14px}
 
-  /* ─── CARDS ─── */
-  .card {
-    background: var(--card);
-    border-radius: 16px;
-    padding: 24px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.04);
-    border: 1px solid rgba(0,0,0,0.05);
-  }
-  .card-title {
-    font-family: 'Syne', sans-serif;
-    font-size: 0.9rem;
-    font-weight: 700;
-    color: var(--muted);
-    text-transform: uppercase;
-    letter-spacing: 0.8px;
-    margin-bottom: 12px;
-  }
+/* ── GRID ── */
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.g12{display:grid;grid-template-columns:1fr 2fr;gap:16px;align-items:start}
+.g21{display:grid;grid-template-columns:2fr 1fr;gap:16px;align-items:start}
 
-  /* ─── GRID ─── */
-  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; }
-  .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+/* ── KPI ── */
+.kpi{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:16px 18px}
+.kpi-val{font-size:26px;font-weight:800;font-family:'JetBrains Mono',monospace;line-height:1;color:var(--black)}
+.kpi-lbl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);margin-top:4px}
+.kpi-delta{font-size:11px;font-family:'JetBrains Mono',monospace;color:var(--muted);margin-top:3px}
 
-  /* ─── CHART CONTAINERS ─── */
-  .chart-wrap {
-    background: var(--card);
-    border-radius: 16px;
-    padding: 28px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
-    border: 1px solid rgba(0,0,0,0.05);
-  }
-  .chart-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    margin-bottom: 24px;
-  }
-  .chart-label {
-    font-family: 'Syne', sans-serif;
-    font-size: 1rem;
-    font-weight: 700;
-    color: var(--navy);
-  }
-  .chart-desc { font-size: 0.82rem; color: var(--muted); margin-top: 4px; }
-  .insight-box {
-    background: linear-gradient(135deg, #f0fdf9, #d1fae5);
-    border: 1px solid #6ee7b7;
-    border-radius: 10px;
-    padding: 14px 16px;
-    margin-top: 16px;
-    font-size: 0.85rem;
-    color: var(--teal-dark);
-    display: flex;
-    gap: 10px;
-    align-items: flex-start;
-  }
-  .insight-box.red-box {
-    background: linear-gradient(135deg, #fff5f5, #fee2e2);
-    border-color: #fca5a5;
-    color: #7f1d1d;
-  }
-  .insight-box.amber-box {
-    background: linear-gradient(135deg, #fffbeb, #fef3c7);
-    border-color: #fcd34d;
-    color: #78350f;
-  }
+/* ── SCAN UI ── */
+.scan-zone{border:2px dashed var(--border);border-radius:10px;padding:28px 20px;text-align:center;background:var(--bg);cursor:pointer;transition:all .2s;position:relative;overflow:hidden}
+.scan-zone:hover{border-color:var(--dark);background:#f0f0f0}
+.scan-zone.scanning{border-color:var(--dark);border-style:solid;background:var(--bg2)}
+.scan-zone.success{border-color:var(--dark);border-style:solid;background:var(--dark);color:var(--white)}
+.scan-icon{width:48px;height:48px;margin:0 auto 12px;opacity:.3}
+.scan-label{font-size:13px;font-weight:600;color:var(--mid)}
+.scan-hint{font-size:11.5px;color:var(--muted);margin-top:4px}
+.qr-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:3px;width:48px;height:48px;margin:0 auto 12px}
+.qr-cell{background:var(--dark);border-radius:1px}
+.qr-cell.w{background:var(--white)}
 
-  /* ─── PIE CHART ─── */
-  .pie-wrap {
-    display: flex;
-    align-items: center;
-    gap: 40px;
-  }
-  .pie-svg { flex-shrink: 0; }
-  .pie-legend { flex: 1; }
-  .legend-item {
-    display: flex; align-items: center; gap: 10px;
-    margin-bottom: 12px; font-size: 0.9rem;
-  }
-  .legend-dot { width: 12px; height: 12px; border-radius: 3px; flex-shrink: 0; }
+/* ── FORM ── */
+.fg{margin-bottom:13px}
+.fl{display:block;font-size:11.5px;font-weight:600;color:var(--mid);margin-bottom:5px;text-transform:uppercase;letter-spacing:.4px}
+.fc{width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:6px;font-size:13px;font-family:'Inter',sans-serif;color:var(--dark);background:var(--white);transition:border-color .15s;appearance:none}
+.fc:focus{outline:none;border-color:var(--dark)}
+.fr{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+textarea.fc{resize:vertical;min-height:72px}
 
-  /* ─── BAR CHART ─── */
-  .bar-chart { display: flex; align-items: flex-end; gap: 6px; height: 160px; }
-  .bar-group { display: flex; flex-direction: column; align-items: center; gap: 4px; flex: 1; }
-  .bar {
-    width: 100%;
-    border-radius: 6px 6px 0 0;
-    transition: all 0.3s;
-    cursor: pointer;
-    position: relative;
-  }
-  .bar:hover { filter: brightness(1.15); }
-  .bar-label { font-size: 0.7rem; color: var(--muted); font-family: 'DM Mono', monospace; text-align: center; }
-  .bar-val { font-size: 0.75rem; font-weight: 600; color: var(--navy); text-align: center; }
-  .bar-tooltip {
-    position: absolute;
-    bottom: calc(100% + 6px);
-    left: 50%;
-    transform: translateX(-50%);
-    background: var(--navy);
-    color: white;
-    font-size: 0.7rem;
-    padding: 4px 8px;
-    border-radius: 6px;
-    white-space: nowrap;
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.2s;
-    font-family: 'DM Mono', monospace;
-  }
-  .bar:hover .bar-tooltip { opacity: 1; }
+/* ── BUTTONS ── */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:9px 18px;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;border:none;font-family:'Inter',sans-serif;transition:all .15s}
+.btn:hover{transform:translateY(-1px)}
+.btn-dark{background:var(--dark);color:var(--white)}
+.btn-dark:hover{background:var(--black)}
+.btn-outline{background:transparent;color:var(--dark);border:1.5px solid var(--border)}
+.btn-outline:hover{background:var(--bg);border-color:var(--dark)}
+.btn-sm{padding:6px 13px;font-size:12px}
+.btn-xs{padding:4px 10px;font-size:11px}
 
-  /* ─── SCATTER ─── */
-  .scatter-container { position: relative; height: 200px; border-left: 2px solid #e2e8f0; border-bottom: 2px solid #e2e8f0; margin: 12px 0; }
-  .scatter-dot {
-    position: absolute;
-    width: 10px; height: 10px;
-    border-radius: 50%;
-    transform: translate(-50%, 50%);
-    cursor: pointer;
-    transition: transform 0.2s;
-  }
-  .scatter-dot:hover { transform: translate(-50%, 50%) scale(1.6); z-index: 10; }
-  .trend-line { position: absolute; height: 2px; background: var(--amber); transform-origin: left center; opacity: 0.7; }
+/* ── TABLE ── */
+.tw{overflow-x:auto;border-radius:8px;border:1px solid var(--border)}
+table{width:100%;border-collapse:collapse}
+thead tr{background:var(--dark)}
+th{padding:10px 13px;text-align:left;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:rgba(255,255,255,.7);white-space:nowrap}
+td{padding:10px 13px;font-size:12.5px;border-bottom:1px solid #f0f0f0;vertical-align:middle}
+tbody tr:last-child td{border-bottom:none}
+tbody tr:hover td{background:#fafafa}
 
-  /* ─── HEATMAP ─── */
-  .heatmap { display: grid; gap: 4px; }
-  .heatmap-row { display: flex; gap: 4px; align-items: center; }
-  .heatmap-label { font-size: 0.7rem; color: var(--muted); width: 48px; text-align: right; font-family: 'DM Mono', monospace; }
-  .heatmap-cell {
-    width: 52px; height: 36px;
-    border-radius: 6px;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 0.7rem; font-weight: 600;
-    cursor: pointer;
-    transition: transform 0.15s;
-    font-family: 'DM Mono', monospace;
-    position: relative;
-  }
-  .heatmap-cell:hover { transform: scale(1.15); z-index: 5; }
-  .heatmap-header { display: flex; gap: 4px; margin-left: 52px; }
-  .heatmap-col-label { width: 52px; text-align: center; font-size: 0.7rem; color: var(--muted); font-weight: 600; }
+/* ── CONDITION PILLS ── */
+.pill{display:inline-flex;align-items:center;padding:3px 9px;border-radius:3px;font-size:11px;font-weight:700;font-family:'JetBrains Mono',monospace}
+.p-good{background:var(--dark);color:var(--white)}
+.p-dmg{background:var(--bg2);color:var(--dark2)}
+.p-miss{background:var(--dark2);color:var(--white)}
+.p-bad{background:var(--black);color:var(--white)}
+.p-out{background:var(--bg2);color:var(--mid)}
+.p-over{background:var(--black);color:var(--white)}
+.p-avail{background:var(--bg);color:var(--muted);border:1px solid var(--border)}
 
-  /* ─── BOX PLOT ─── */
-  .boxplot-wrap { display: flex; gap: 40px; align-items: flex-end; padding: 20px 0; height: 180px; }
-  .boxplot-group { display: flex; flex-direction: column; align-items: center; gap: 8px; flex: 1; }
-  .box-container { position: relative; width: 60px; height: 120px; display: flex; align-items: center; justify-content: center; }
-  .box-whisker { width: 2px; background: #94a3b8; position: absolute; }
-  .box-body { position: absolute; border-radius: 4px; border: 2px solid; width: 40px; }
-  .box-median { position: absolute; height: 2px; width: 40px; }
-  .boxplot-label { font-size: 0.8rem; font-weight: 600; color: var(--navy); text-align: center; }
-  .boxplot-sublabel { font-size: 0.7rem; color: var(--muted); text-align: center; }
+/* ── STATUS BADGE ── */
+.status-dot{width:7px;height:7px;border-radius:50%;display:inline-block;margin-right:5px}
+.sd-ok{background:var(--dark)}
+.sd-warn{background:var(--mid)}
+.sd-bad{background:var(--black)}
 
-  /* ─── FILTERS ─── */
-  .filter-bar {
-    background: white;
-    border-radius: 12px;
-    padding: 16px 20px;
-    display: flex;
-    gap: 16px;
-    align-items: center;
-    flex-wrap: wrap;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
-    border: 1px solid rgba(0,0,0,0.05);
-    margin-bottom: 28px;
-  }
-  .filter-label { font-size: 0.8rem; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; white-space: nowrap; }
-  .filter-select {
-    padding: 7px 12px;
-    border-radius: 7px;
-    border: 1.5px solid #e2e8f0;
-    font-size: 0.85rem;
-    font-family: 'DM Sans', sans-serif;
-    color: var(--navy);
-    background: white;
-    cursor: pointer;
-    transition: border-color 0.2s;
-  }
-  .filter-select:focus { outline: none; border-color: var(--teal); }
-  .filter-divider { width: 1px; height: 24px; background: #e2e8f0; }
+/* ── ALERT CARD ── */
+.alert-item{background:var(--card);border:1px solid var(--border);border-radius:7px;padding:14px 16px;display:flex;align-items:center;gap:14px;margin-bottom:10px;transition:box-shadow .15s}
+.alert-item:hover{box-shadow:0 2px 8px rgba(0,0,0,.07)}
+.alert-item.critical{border-left:3px solid var(--black)}
+.alert-item.warning{border-left:3px solid var(--mid)}
+.alert-sev{width:36px;height:36px;border-radius:6px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:11px;font-weight:800;font-family:'JetBrains Mono',monospace}
+.sev-crit{background:var(--black);color:var(--white)}
+.sev-warn{background:var(--bg2);color:var(--dark)}
+.alert-info{flex:1}
+.alert-title{font-size:13px;font-weight:700;color:var(--black)}
+.alert-sub{font-size:11.5px;color:var(--muted);margin-top:2px}
+.alert-time{font-size:11px;font-family:'JetBrains Mono',monospace;color:var(--light)}
 
-  /* ─── SOLUTION PAGE ─── */
-  .solution-hero {
-    background: linear-gradient(135deg, var(--teal-dark), var(--navy));
-    padding: 60px 2rem;
-    text-align: center;
-  }
-  .solution-hero h2 {
-    font-family: 'Syne', sans-serif;
-    font-size: 2.5rem;
-    font-weight: 800;
-    color: white;
-    margin-bottom: 12px;
-  }
-  .solution-hero p { color: rgba(255,255,255,0.7); font-size: 1rem; max-width: 560px; margin: 0 auto; }
+/* ── ITEM HISTORY ── */
+.history-line{display:flex;gap:14px;padding:12px 0;border-bottom:1px solid #f0f0f0;align-items:flex-start}
+.history-line:last-child{border-bottom:none}
+.hist-dot{width:8px;height:8px;border-radius:50%;background:var(--dark);flex-shrink:0;margin-top:5px}
+.hist-dot.scan-out{background:var(--mid)}
+.hist-dot.overdue{background:var(--black)}
+.hist-info{flex:1}
+.hist-title{font-size:12.5px;font-weight:600;color:var(--dark)}
+.hist-sub{font-size:11.5px;color:var(--muted);margin-top:2px}
+.hist-time{font-size:11px;font-family:'JetBrains Mono',monospace;color:var(--light);flex-shrink:0}
 
-  /* ─── RESERVATION FLOW ─── */
-  .flow-steps {
-    display: flex;
-    gap: 0;
-    margin: 32px 0;
-    position: relative;
-  }
-  .flow-steps::before {
-    content: '';
-    position: absolute;
-    top: 28px;
-    left: 40px;
-    right: 40px;
-    height: 2px;
-    background: linear-gradient(90deg, var(--teal), var(--amber), var(--red));
-    z-index: 0;
-  }
-  .flow-step {
-    flex: 1;
-    text-align: center;
-    position: relative;
-    z-index: 1;
-  }
-  .flow-icon {
-    width: 56px; height: 56px;
-    border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 1.4rem;
-    margin: 0 auto 12px;
-    border: 3px solid white;
-    box-shadow: 0 0 0 3px;
-  }
-  .flow-step-title { font-weight: 600; font-size: 0.85rem; color: var(--navy); }
-  .flow-step-desc { font-size: 0.75rem; color: var(--muted); margin-top: 4px; }
+/* ── SCAN RESULT CARD ── */
+.result-card{background:var(--dark);color:var(--white);border-radius:8px;padding:20px;margin-top:16px}
+.result-card.hidden{display:none}
+.rc-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;color:rgba(255,255,255,.4);margin-bottom:3px}
+.rc-val{font-size:14px;font-weight:700;color:var(--white)}
+.rc-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px}
 
-  /* ─── RISK PANEL ─── */
-  .reservation-table { width: 100%; border-collapse: collapse; }
-  .reservation-table th {
-    background: var(--navy);
-    color: rgba(255,255,255,0.7);
-    font-size: 0.72rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.8px;
-    padding: 10px 14px;
-    text-align: left;
-    font-family: 'DM Mono', monospace;
-  }
-  .reservation-table td {
-    padding: 12px 14px;
-    font-size: 0.85rem;
-    border-bottom: 1px solid #f1f5f9;
-    vertical-align: middle;
-  }
-  .reservation-table tr:hover td { background: #f8faff; }
-  .risk-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-    padding: 4px 10px;
-    border-radius: 20px;
-    font-size: 0.75rem;
-    font-weight: 700;
-    font-family: 'DM Mono', monospace;
-  }
-  .risk-high { background: #fee2e2; color: #991b1b; }
-  .risk-medium { background: #fef3c7; color: #92400e; }
-  .risk-low { background: #d1fae5; color: #065f46; }
-  .risk-dot { width: 6px; height: 6px; border-radius: 50%; }
-  .risk-high .risk-dot { background: #ef4444; }
-  .risk-medium .risk-dot { background: #f59e0b; }
-  .risk-low .risk-dot { background: #22c55e; }
+/* ── SEARCH ── */
+.search-bar{display:flex;gap:9px;margin-bottom:16px}
+.search-input{flex:1;padding:9px 13px;border:1.5px solid var(--border);border-radius:6px;font-size:13px;font-family:'Inter',sans-serif;color:var(--dark);background:var(--white)}
+.search-input:focus{outline:none;border-color:var(--dark)}
 
-  /* ─── RISK METER ─── */
-  .risk-meter { display: flex; align-items: center; gap: 8px; }
-  .risk-bar-track { height: 6px; border-radius: 3px; background: #e2e8f0; flex: 1; overflow: hidden; }
-  .risk-bar-fill { height: 100%; border-radius: 3px; transition: width 0.5s ease; }
+/* ── HUB HEALTH BARS ── */
+.hub-row{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid #f5f5f5}
+.hub-row:last-child{border-bottom:none}
+.hub-row-name{width:120px;font-size:12px;font-weight:600;flex-shrink:0}
+.hub-row-bar{flex:1;height:6px;background:var(--bg2);border-radius:3px;overflow:hidden}
+.hub-row-fill{height:100%;border-radius:3px;background:var(--dark)}
+.hub-row-val{width:36px;text-align:right;font-size:11px;font-family:'JetBrains Mono',monospace;color:var(--mid);flex-shrink:0}
 
-  /* ─── KPI CARDS ─── */
-  .kpi-card {
-    background: white;
-    border-radius: 14px;
-    padding: 20px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
-    border: 1px solid rgba(0,0,0,0.05);
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-  }
-  .kpi-icon { font-size: 1.5rem; }
-  .kpi-value {
-    font-family: 'Syne', sans-serif;
-    font-size: 2rem;
-    font-weight: 800;
-    line-height: 1;
-  }
-  .kpi-label { font-size: 0.8rem; color: var(--muted); font-weight: 500; }
-  .kpi-change {
-    font-size: 0.75rem;
-    font-weight: 600;
-    font-family: 'DM Mono', monospace;
-    display: flex;
-    align-items: center;
-    gap: 4px;
-  }
-  .kpi-change.good { color: var(--green); }
-  .kpi-change.bad { color: var(--red); }
+/* ── PROGRESS RING ── */
+.ring-wrap{display:flex;flex-direction:column;align-items:center;justify-content:center}
+.ring{position:relative;width:110px;height:110px}
+.ring svg{transform:rotate(-90deg)}
+.ring-bg{fill:none;stroke:var(--bg2);stroke-width:9}
+.ring-fg{fill:none;stroke-width:9;stroke-linecap:round;stroke:var(--dark)}
+.ring-txt{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.ring-num{font-size:20px;font-weight:800;font-family:'JetBrains Mono',monospace}
+.ring-lbl{font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-top:1px}
 
-  /* ─── MODAL ─── */
-  .modal-overlay {
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,0.5);
-    z-index: 2000;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.25s;
-    backdrop-filter: blur(4px);
-  }
-  .modal-overlay.open { opacity: 1; pointer-events: all; }
-  .modal {
-    background: white;
-    border-radius: 20px;
-    padding: 32px;
-    max-width: 520px;
-    width: 90%;
-    transform: translateY(20px) scale(0.97);
-    transition: transform 0.25s;
-    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-  }
-  .modal-overlay.open .modal { transform: translateY(0) scale(1); }
-  .modal-title {
-    font-family: 'Syne', sans-serif;
-    font-size: 1.3rem;
-    font-weight: 700;
-    color: var(--navy);
-    margin-bottom: 8px;
-  }
-  .modal-close {
-    position: absolute;
-    top: 20px; right: 20px;
-    width: 32px; height: 32px;
-    border-radius: 8px;
-    border: none;
-    background: #f1f5f9;
-    cursor: pointer;
-    font-size: 1rem;
-    display: flex; align-items: center; justify-content: center;
-  }
-  .modal { position: relative; }
+/* ── TOAST ── */
+.toast{position:fixed;bottom:20px;right:20px;background:var(--black);color:var(--white);padding:10px 16px;border-radius:7px;font-size:12.5px;font-weight:500;max-width:300px;box-shadow:0 6px 20px rgba(0,0,0,.18);z-index:999;transform:translateX(110%);transition:transform .28s cubic-bezier(.34,1.56,.64,1);display:flex;align-items:center;gap:8px}
+.toast.show{transform:none}
 
-  /* ─── FORM ─── */
-  .form-group { margin-bottom: 16px; }
-  .form-label { display: block; font-size: 0.82rem; font-weight: 600; color: var(--slate); margin-bottom: 6px; }
-  .form-input {
-    width: 100%;
-    padding: 10px 14px;
-    border-radius: 8px;
-    border: 1.5px solid #e2e8f0;
-    font-size: 0.9rem;
-    font-family: 'DM Sans', sans-serif;
-    color: var(--navy);
-    transition: border-color 0.2s;
-  }
-  .form-input:focus { outline: none; border-color: var(--teal); box-shadow: 0 0 0 3px rgba(26,122,110,0.1); }
-  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-  .form-row { display: flex; gap: 8px; }
+/* ── MODAL ── */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:800;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .2s}
+.modal-bg.open{opacity:1;pointer-events:all}
+.modal-box{background:var(--white);border-radius:10px;padding:26px;width:440px;max-width:92vw;box-shadow:0 16px 48px rgba(0,0,0,.18);transform:translateY(10px);transition:transform .2s}
+.modal-bg.open .modal-box{transform:none}
+.modal-hd{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px}
+.modal-title{font-size:15px;font-weight:700}
+.modal-close{width:26px;height:26px;border:1px solid var(--border);border-radius:5px;background:none;cursor:pointer;font-size:13px;color:var(--muted);display:flex;align-items:center;justify-content:center}
+.modal-close:hover{background:var(--bg);color:var(--dark)}
 
-  /* ─── NOTIFICATION ─── */
-  .notif {
-    position: fixed;
-    bottom: 24px; right: 24px;
-    background: var(--navy);
-    color: white;
-    padding: 14px 20px;
-    border-radius: 12px;
-    font-size: 0.875rem;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    z-index: 3000;
-    transform: translateX(120%);
-    transition: transform 0.4s cubic-bezier(0.34,1.56,0.64,1);
-    max-width: 340px;
-    box-shadow: 0 8px 24px rgba(0,0,0,0.3);
-  }
-  .notif.show { transform: translateX(0); }
-  .notif-icon { font-size: 1.2rem; }
+/* ── TABS ── */
+.tabs{display:flex;border-bottom:1.5px solid var(--border);margin-bottom:18px}
+.tab{padding:9px 16px;font-size:12.5px;font-weight:500;color:var(--muted);cursor:pointer;border:none;background:none;border-bottom:2px solid transparent;margin-bottom:-1.5px;font-family:'Inter',sans-serif;transition:all .14s}
+.tab:hover{color:var(--dark)}
+.tab.active{color:var(--black);border-bottom-color:var(--black);font-weight:700}
+.tab-panel{display:none}.tab-panel.active{display:block;animation:fu .18s ease}
 
-  /* ─── PROGRESS BAR ─── */
-  .progress-bar-track { height: 8px; background: #e2e8f0; border-radius: 4px; overflow: hidden; }
-  .progress-bar-fill { height: 100%; border-radius: 4px; transition: width 1s ease; }
-
-  /* ─── DIVIDER ─── */
-  .page-divider {
-    height: 4px;
-    background: linear-gradient(90deg, var(--teal), var(--amber));
-    margin: 0;
-  }
-
-  /* ─── TABS ─── */
-  .tab-group { display: flex; gap: 4px; border-bottom: 2px solid #e2e8f0; margin-bottom: 24px; }
-  .tab-btn {
-    padding: 10px 20px;
-    border: none;
-    background: none;
-    font-size: 0.875rem;
-    font-weight: 500;
-    color: var(--muted);
-    cursor: pointer;
-    font-family: 'DM Sans', sans-serif;
-    border-bottom: 2px solid transparent;
-    margin-bottom: -2px;
-    transition: all 0.2s;
-  }
-  .tab-btn.active { color: var(--teal); border-bottom-color: var(--teal); font-weight: 600; }
-  .tab-btn:hover:not(.active) { color: var(--navy); }
-  .tab-content { display: none; }
-  .tab-content.active { display: block; animation: fadeIn 0.3s ease; }
-
-  /* ─── RESPONSIVE ─── */
-  @media(max-width: 768px) {
-    .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
-    .hero h1 { font-size: 2.2rem; }
-    .pie-wrap { flex-direction: column; }
-    .flow-steps { flex-direction: column; gap: 16px; }
-    .flow-steps::before { display: none; }
-  }
-
-  /* ─── SEPARATOR ─── */
-  .zigzag-sep {
-    height: 48px;
-    background: var(--bg);
-    position: relative;
-    overflow: hidden;
-  }
-  .zigzag-sep::before {
-    content: '';
-    position: absolute;
-    top: 0; left: 0; right: 0;
-    height: 100%;
-    background: linear-gradient(135deg, var(--navy) 25%, transparent 25%) -20px 0,
-                linear-gradient(225deg, var(--navy) 25%, transparent 25%) -20px 0,
-                linear-gradient(315deg, var(--navy) 25%, transparent 25%),
-                linear-gradient(45deg, var(--navy) 25%, transparent 25%);
-    background-size: 40px 48px;
-    background-color: var(--bg);
-  }
-  .section-divider { border: none; border-top: 1px solid #e2e8f0; margin: 40px 0; }
-
-  .stat-trend {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    font-size: 0.72rem;
-    font-weight: 700;
-    padding: 2px 8px;
-    border-radius: 20px;
-    font-family: 'DM Mono', monospace;
-  }
-  .stat-trend.up { background: #fee2e2; color: var(--red); }
-  .stat-trend.down { background: #d1fae5; color: var(--green); }
-
-  .tag {
-    display: inline-flex;
-    padding: 3px 10px;
-    border-radius: 20px;
-    font-size: 0.72rem;
-    font-weight: 600;
-    font-family: 'DM Mono', monospace;
-  }
-  .tag-teal { background: #d1fae5; color: var(--teal-dark); }
-  .tag-amber { background: #fef3c7; color: #78350f; }
-  .tag-red { background: #fee2e2; color: #7f1d1d; }
-  .tag-navy { background: #e0e7ff; color: #312e81; }
+/* ── MISC ── */
+.divider{height:1px;background:var(--border);margin:20px 0}
+.mono{font-family:'JetBrains Mono',monospace}
+.cc{position:relative;width:100%}
 </style>
 </head>
 <body>
 
-<!-- ═══════════════════════════════════════════════════ -->
-<!-- NAV -->
-<!-- ═══════════════════════════════════════════════════ -->
-<nav>
-  <div class="nav-brand">
-    <div class="nav-logo">📦</div>
-    BorrowBox Analytics
-  </div>
-  <div class="nav-tabs">
-    <button class="nav-tab active" onclick="showPage('story')">📖 The Story</button>
-    <button class="nav-tab" onclick="showPage('solution')">🎯 Solution</button>
-    <button class="nav-tab" onclick="showPage('reservations')">📋 Reservations</button>
-    <button class="nav-tab" onclick="showPage('hubs')">🏢 Hub Monitor</button>
-    <button class="nav-tab" onclick="showPage('model')">🤖 ML Engine</button>
-  </div>
-  <span class="nav-badge">PROTOTYPE v1.0</span>
-</nav>
+<div class="app">
 
-<!-- ═══════════════════════════════════════════════════ -->
-<!-- PAGE: STORY (DASHBOARD) -->
-<!-- ═══════════════════════════════════════════════════ -->
-<div class="page active" id="page-story">
-
-  <!-- Hero -->
-  <div class="hero">
-    <div class="hero-tag">📊 IS 5960 · Saint Louis University · March 2026</div>
-    <h1>Reservation Risk &<br><span>Impact Story</span></h1>
-    <p>Discover who doesn't show up, when it happens, why it occurs, and what it costs BorrowBox's shared gear lending operations across 12 Toronto hubs.</p>
-    <div class="hero-stats">
-      <div class="hero-stat">
-        <span class="hero-stat-num red" id="stat-noshowrate">29.2%</span>
-        <span class="hero-stat-label">NO-SHOW RATE</span>
-      </div>
-      <div class="hero-stat">
-        <span class="hero-stat-num amber">48 hrs</span>
-        <span class="hero-stat-label">AVG BLOCK TIME</span>
-      </div>
-      <div class="hero-stat">
-        <span class="hero-stat-num amber">28 min</span>
-        <span class="hero-stat-label">WASTED PREP</span>
-      </div>
-      <div class="hero-stat">
-        <span class="hero-stat-num">2,500</span>
-        <span class="hero-stat-label">RESERVATIONS</span>
-      </div>
-      <div class="hero-stat">
-        <span class="hero-stat-num green">12</span>
-        <span class="hero-stat-label">HUBS</span>
-      </div>
-    </div>
-    <div class="hero-cta">
-      <button class="btn btn-primary" onclick="showPage('solution')">▶ See Our Solution →</button>
-      <button class="btn btn-outline" onclick="scrollToStory()">📖 Explore the Story ↓</button>
-    </div>
+<!-- ══ SIDEBAR ══════════════════════════════════════════════════ -->
+<aside class="sidebar">
+  <div class="sb-brand">
+    <div class="sb-logo">BorrowBox QR</div>
+    <div class="sb-sub">Inventory Tracking System</div>
   </div>
 
-  <!-- Filter Bar -->
-  <div style="padding: 24px 2rem 0; max-width: 1200px; margin: 0 auto;" id="story-start">
-    <div class="filter-bar">
-      <span class="filter-label">🔍 Filter:</span>
-      <select class="filter-select" id="filter-cat" onchange="applyFilters()">
-        <option value="all">All Categories</option>
-        <option value="tools">🔧 Tools</option>
-        <option value="sports">⚽ Sports</option>
-        <option value="camping">⛺ Camping</option>
-      </select>
-      <div class="filter-divider"></div>
-      <select class="filter-select" id="filter-slot" onchange="applyFilters()">
-        <option value="all">All Time Slots</option>
-        <option value="morning">🌅 Morning</option>
-        <option value="afternoon">☀️ Afternoon</option>
-        <option value="evening">🌆 Evening</option>
-      </select>
-      <div class="filter-divider"></div>
-      <select class="filter-select" id="filter-reminder" onchange="applyFilters()">
-        <option value="all">All Reminders</option>
-        <option value="yes">✅ Reminder Sent</option>
-        <option value="no">❌ No Reminder</option>
-      </select>
-      <div class="filter-divider"></div>
-      <button class="btn btn-sm btn-outline" style="color:var(--navy);border-color:#e2e8f0;" onclick="resetFilters()">↺ Reset</button>
-      <span id="filter-count" style="font-size:0.8rem;color:var(--muted);font-family:'DM Mono',monospace;margin-left:auto;">Showing 2,500 records</span>
+  <div class="sb-section">
+    <div class="sb-sec-label">Staff View</div>
+    <button class="sb-item active" onclick="nav(this,'pg-scanout')">
+      <svg class="sb-ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M1 5V2a1 1 0 011-1h3M10 1h3a1 1 0 011 1v3M15 11v3a1 1 0 01-1 1h-3M6 15H3a1 1 0 01-1-1v-3"/><rect x="5" y="5" width="6" height="6" rx="1"/></svg>
+      Scan Out — Checkout
+    </button>
+    <button class="sb-item" onclick="nav(this,'pg-scanin')">
+      <svg class="sb-ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M15 5V2a1 1 0 00-1-1h-3M6 1H3a1 1 0 00-1 1v3M1 11v3a1 1 0 001 1h3M10 15h3a1 1 0 001-1v-3"/><rect x="5" y="5" width="6" height="6" rx="1"/></svg>
+      Scan In — Return
+    </button>
+  </div>
+
+  <div class="sb-section">
+    <div class="sb-sec-label">Admin View</div>
+    <button class="sb-item" onclick="nav(this,'pg-alerts')">
+      <svg class="sb-ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M8 1a5 5 0 015 5c0 3 1 4 1 5H2c0-1 1-2 1-5a5 5 0 015-5zM6.5 13.5a1.5 1.5 0 003 0"/></svg>
+      Overdue Alerts
+    </button>
+    <button class="sb-item" onclick="nav(this,'pg-inventory')">
+      <svg class="sb-ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="1" y="1" width="14" height="14" rx="2"/><path d="M4 6h8M4 10h5"/></svg>
+      Live Inventory
+    </button>
+    <button class="sb-item" onclick="nav(this,'pg-history')">
+      <svg class="sb-ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="8" cy="8" r="6"/><path d="M8 5v3l2 2"/></svg>
+      Item History
+    </button>
+  </div>
+
+  <div class="sb-footer">
+    IS 5960 &middot; SLU &middot; 2026<br>
+    Hub 6 &mdash; Annex<br>
+    Staff: J. Martinez
+  </div>
+</aside>
+
+<!-- ══ MAIN ══════════════════════════════════════════════════════ -->
+<div class="main-area">
+
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <span class="tb-title" id="topbar-title">Scan Out &mdash; Item Checkout</span>
+    <div class="tb-right">
+      <div class="view-toggle">
+        <button class="vt-btn active" onclick="setView('staff',this)">Staff View</button>
+        <button class="vt-btn" onclick="setView('admin',this)">Admin View</button>
+      </div>
+      <span class="tb-badge">Hub 6 &mdash; Annex</span>
     </div>
   </div>
 
-  <!-- Section 01: No-Show Landscape -->
-  <div class="story-section">
-    <div class="section-header">
-      <div class="section-num">01</div>
-      <div>
-        <div class="section-title">No-Show Risk Landscape</div>
-      </div>
-    </div>
-    <div class="section-subtitle">Visualizing overall no-show probability distribution across all reservations</div>
-
-    <div class="grid-2" style="gap:20px;">
-      <!-- Pie Chart -->
-      <div class="chart-wrap">
-        <div class="chart-header">
-          <div>
-            <div class="chart-label">No-Show Distribution</div>
-            <div class="chart-desc">Proportion of reservations resulting in no-shows vs successful pickups</div>
-          </div>
-        </div>
-        <div class="pie-wrap">
-          <svg width="180" height="180" viewBox="0 0 36 36" class="pie-svg">
-            <!-- Successful: 70.8% -->
-            <circle r="15.9" cx="18" cy="18" fill="transparent" stroke="#1a7a6e" stroke-width="3.2"
-              stroke-dasharray="44.74 55.96" stroke-dashoffset="0" transform="rotate(-90 18 18)"/>
-            <!-- No-show: 29.2% -->
-            <circle r="15.9" cx="18" cy="18" fill="transparent" stroke="#dc2626" stroke-width="3.2"
-              stroke-dasharray="18.42 82.28" stroke-dashoffset="-44.74" transform="rotate(-90 18 18)"/>
-            <text x="18" y="16" text-anchor="middle" font-size="5.5" font-weight="bold" fill="#0f1f2e" font-family="Syne">29.2%</text>
-            <text x="18" y="21.5" text-anchor="middle" font-size="2.8" fill="#64748b" font-family="DM Sans">NO-SHOW</text>
-          </svg>
-          <div class="pie-legend">
-            <div class="legend-item"><div class="legend-dot" style="background:#dc2626"></div><div><strong style="font-family:'Syne',sans-serif">29.2% — No-Shows</strong><br><span style="font-size:0.78rem;color:var(--muted)">730 of 2,500 reservations abandoned</span></div></div>
-            <div class="legend-item"><div class="legend-dot" style="background:#1a7a6e"></div><div><strong style="font-family:'Syne',sans-serif">70.8% — Successful</strong><br><span style="font-size:0.78rem;color:var(--muted)">1,770 reservations fulfilled</span></div></div>
-            <div style="margin-top:16px;padding-top:16px;border-top:1px solid #f1f5f9;">
-              <div style="font-size:0.8rem;color:var(--muted);margin-bottom:6px;font-weight:600;">By Category</div>
-              <div style="display:flex;gap:8px;flex-wrap:wrap;">
-                <span class="tag tag-navy">🔧 Tools 27.8%</span>
-                <span class="tag tag-amber">⚽ Sports 30.1%</span>
-                <span class="tag tag-red">⛺ Camping 29.7%</span>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="insight-box red-box">
-          🚨 <span><strong>Nearly 1 in 3 reservations</strong> results in a no-show — matching healthcare benchmark ranges of 20–30%. Staff waste is compounded across all 12 hubs every day.</span>
-        </div>
-      </div>
-
-      <!-- Category Breakdown -->
-      <div class="chart-wrap">
-        <div class="chart-header">
-          <div>
-            <div class="chart-label">No-Show Rate by Category</div>
-            <div class="chart-desc">Which gear type has highest abandonment rate?</div>
-          </div>
-        </div>
-        <div style="padding:12px 0;">
-          <div style="margin-bottom:20px;">
-            <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
-              <span style="font-size:0.85rem;font-weight:600;">🔧 Tools</span>
-              <span style="font-size:0.85rem;font-family:'DM Mono',monospace;color:var(--red);font-weight:700;">27.8%</span>
-            </div>
-            <div class="progress-bar-track"><div class="progress-bar-fill" style="width:27.8%;background:#6366f1;"></div></div>
-          </div>
-          <div style="margin-bottom:20px;">
-            <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
-              <span style="font-size:0.85rem;font-weight:600;">⚽ Sports</span>
-              <span style="font-size:0.85rem;font-family:'DM Mono',monospace;color:var(--red);font-weight:700;">30.1%</span>
-            </div>
-            <div class="progress-bar-track"><div class="progress-bar-fill" style="width:30.1%;background:#f59e0b;"></div></div>
-          </div>
-          <div style="margin-bottom:20px;">
-            <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
-              <span style="font-size:0.85rem;font-weight:600;">⛺ Camping</span>
-              <span style="font-size:0.85rem;font-family:'DM Mono',monospace;color:var(--red);font-weight:700;">29.7%</span>
-            </div>
-            <div class="progress-bar-track"><div class="progress-bar-fill" style="width:29.7%;background:#dc2626;"></div></div>
-          </div>
-          <div style="margin-bottom:4px;">
-            <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
-              <span style="font-size:0.85rem;font-weight:600;">📊 Overall Average</span>
-              <span style="font-size:0.85rem;font-family:'DM Mono',monospace;color:var(--red);font-weight:700;">29.2%</span>
-            </div>
-            <div class="progress-bar-track"><div class="progress-bar-fill" style="width:29.2%;background:#1a7a6e;"></div></div>
-          </div>
-        </div>
-        <div class="insight-box">
-          📌 <span>Sports equipment has the highest abandonment — possibly seasonal interest changes between booking and pickup day.</span>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Section 02: Lead Time -->
-  <div style="background:#f8faff;padding:0 0 4px;">
-  <div class="story-section">
-    <div class="section-header">
-      <div class="section-num">02</div>
-      <div>
-        <div class="section-title">Time & Commitment Effect</div>
-      </div>
-    </div>
-    <div class="section-subtitle">How far in advance a patron books directly predicts whether they show up</div>
-
-    <div class="chart-wrap">
-      <div class="chart-header">
-        <div>
-          <div class="chart-label">Lead Time vs. No-Show Rate (Scatter Plot with Trend)</div>
-          <div class="chart-desc">Each point represents a lead-time bucket (0–30 days). Trend line shows the relationship. Hover each point.</div>
-        </div>
-        <span class="tag tag-red">↑ Positive Correlation</span>
-      </div>
-
-      <!-- Y Axis label -->
-      <div style="display:flex;gap:12px;align-items:flex-start;">
-        <div style="writing-mode:vertical-rl;transform:rotate(180deg);font-size:0.72rem;color:var(--muted);font-family:'DM Mono',monospace;padding:8px 0;white-space:nowrap;">NO-SHOW RATE (%)</div>
-        <div style="flex:1;">
-          <!-- Y labels -->
-          <div style="display:flex;flex-direction:column;height:200px;justify-content:space-between;position:relative;margin-bottom:4px;">
-            <span style="font-size:0.65rem;color:var(--muted);font-family:'DM Mono',monospace;line-height:1;">45%</span>
-            <span style="font-size:0.65rem;color:var(--muted);font-family:'DM Mono',monospace;">35%</span>
-            <span style="font-size:0.65rem;color:var(--muted);font-family:'DM Mono',monospace;">25%</span>
-            <span style="font-size:0.65rem;color:var(--muted);font-family:'DM Mono',monospace;">15%</span>
-            <span style="font-size:0.65rem;color:var(--muted);font-family:'DM Mono',monospace;">5%</span>
-          </div>
-          <div class="scatter-container" id="scatter-chart">
-            <!-- Grid lines -->
-            <div style="position:absolute;inset:0;display:flex;flex-direction:column;justify-content:space-between;pointer-events:none;">
-              <div style="border-top:1px dashed #e2e8f0;width:100%;"></div>
-              <div style="border-top:1px dashed #e2e8f0;width:100%;"></div>
-              <div style="border-top:1px dashed #e2e8f0;width:100%;"></div>
-              <div style="border-top:1px dashed #e2e8f0;width:100%;"></div>
-              <div style="border-top:1px dashed #e2e8f0;width:100%;"></div>
-            </div>
-            <!-- Trend line (approximate from 12% at day 0 to 38% at day 30) -->
-            <div style="position:absolute;bottom:14%;left:0;right:0;height:2px;background:linear-gradient(90deg,#22c55e,#f59e0b,#dc2626);opacity:0.6;transform:rotate(-6deg);transform-origin:left center;"></div>
-          </div>
-          <div style="display:flex;justify-content:space-between;padding:6px 0 0;font-size:0.65rem;color:var(--muted);font-family:'DM Mono',monospace;">
-            <span>0d</span><span>5d</span><span>10d</span><span>15d</span><span>20d</span><span>25d</span><span>30d</span>
-          </div>
-          <div style="text-align:center;font-size:0.72rem;color:var(--muted);font-family:'DM Mono',monospace;margin-top:4px;">RESERVATION LEAD TIME (DAYS)</div>
-        </div>
-      </div>
-
-      <!-- Key data points as interactive cards -->
-      <div class="grid-4" style="margin-top:24px;gap:10px;">
-        <div class="card" style="padding:14px;cursor:pointer;transition:box-shadow 0.2s;" onmouseenter="this.style.boxShadow='0 4px 20px rgba(34,197,94,0.2)'" onmouseleave="this.style.boxShadow=''">
-          <div style="font-size:0.7rem;color:var(--muted);font-family:'DM Mono',monospace;">SAME DAY (0–2d)</div>
-          <div style="font-family:'Syne',sans-serif;font-size:1.6rem;font-weight:800;color:var(--green);">12.4%</div>
-          <div style="font-size:0.72rem;color:var(--muted);">Patron is actively planning — low risk</div>
-        </div>
-        <div class="card" style="padding:14px;cursor:pointer;transition:box-shadow 0.2s;" onmouseenter="this.style.boxShadow='0 4px 20px rgba(245,158,11,0.2)'" onmouseleave="this.style.boxShadow=''">
-          <div style="font-size:0.7rem;color:var(--muted);font-family:'DM Mono',monospace;">SHORT (3–7d)</div>
-          <div style="font-family:'Syne',sans-serif;font-size:1.6rem;font-weight:800;color:#d97706;">22.1%</div>
-          <div style="font-size:0.72rem;color:var(--muted);">Moderate commitment level</div>
-        </div>
-        <div class="card" style="padding:14px;cursor:pointer;transition:box-shadow 0.2s;border:1.5px solid #fee2e2;" onmouseenter="this.style.boxShadow='0 4px 20px rgba(220,38,38,0.2)'" onmouseleave="this.style.boxShadow=''">
-          <div style="font-size:0.7rem;color:var(--muted);font-family:'DM Mono',monospace;">⚠️ HIGH RISK (15–21d)</div>
-          <div style="font-family:'Syne',sans-serif;font-size:1.6rem;font-weight:800;color:var(--red);">37.5%</div>
-          <div style="font-size:0.72rem;color:var(--red);">Plans change — far in advance</div>
-        </div>
-        <div class="card" style="padding:14px;cursor:pointer;transition:box-shadow 0.2s;" onmouseenter="this.style.boxShadow='0 4px 20px rgba(220,38,38,0.2)'" onmouseleave="this.style.boxShadow=''">
-          <div style="font-size:0.7rem;color:var(--muted);font-family:'DM Mono',monospace;">LONG (22–30d)</div>
-          <div style="font-family:'Syne',sans-serif;font-size:1.6rem;font-weight:800;color:var(--red);">34.2%</div>
-          <div style="font-size:0.72rem;color:var(--muted);">High forgetfulness risk</div>
-        </div>
-      </div>
-
-      <div class="insight-box amber-box" style="margin-top:16px;">
-        ⏱️ <span><strong>Reservations made 15–21 days in advance show a 37.5% no-show rate</strong> — 3× higher than same-day bookings. Patrons who book far ahead often forget, change plans, or find alternatives. This directly supports the need for automated reminders for far-ahead reservations.</span>
-      </div>
-    </div>
-  </div>
-  </div>
-
-  <!-- Section 03: Patron Behavior -->
-  <div class="story-section">
-    <div class="section-header">
-      <div class="section-num">03</div>
-      <div><div class="section-title">Patron Reliability Fingerprint</div></div>
-    </div>
-    <div class="section-subtitle">Repeat no-show behavior patterns and their predictive power — past behavior is the single strongest predictor</div>
-
-    <div class="grid-2" style="gap:20px;">
-      <!-- Box Plot -->
-      <div class="chart-wrap">
-        <div class="chart-header">
-          <div>
-            <div class="chart-label">Prior No-Shows vs. Current Outcome (Box Plot)</div>
-            <div class="chart-desc">Distribution of prior no-show history grouped by whether patron showed up or not</div>
-          </div>
-        </div>
-        <div style="display:flex;align-items:flex-end;gap:48px;height:200px;padding:0 24px 0 48px;position:relative;">
-          <!-- Y axis -->
-          <div style="position:absolute;left:0;top:0;bottom:0;display:flex;flex-direction:column;justify-content:space-between;font-size:0.65rem;color:var(--muted);font-family:'DM Mono',monospace;">
-            <span>6</span><span>5</span><span>4</span><span>3</span><span>2</span><span>1</span><span>0</span>
-          </div>
-          <!-- Showed Up Box -->
-          <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:8px;">
-            <div style="position:relative;width:60px;flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;">
-              <!-- whisker top -->
-              <div style="width:2px;height:16%;background:#94a3b8;"></div>
-              <!-- box body -->
-              <div style="width:48px;height:28%;background:#d1fae5;border:2px solid #1a7a6e;border-radius:4px;position:relative;">
-                <!-- median -->
-                <div style="position:absolute;left:0;right:0;top:40%;height:2px;background:#1a7a6e;"></div>
-              </div>
-              <!-- whisker bottom -->
-              <div style="width:2px;height:10%;background:#94a3b8;"></div>
-            </div>
-            <div style="text-align:center;">
-              <div style="font-size:0.82rem;font-weight:700;color:var(--green);">✅ Showed Up</div>
-              <div style="font-size:0.7rem;color:var(--muted);">Median: 0 prior no-shows</div>
-              <div style="font-size:0.7rem;color:var(--muted);">IQR: 0–1</div>
-            </div>
-          </div>
-          <!-- Did Not Show Box -->
-          <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:8px;">
-            <div style="position:relative;width:60px;flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;">
-              <!-- whisker top -->
-              <div style="width:2px;height:40%;background:#94a3b8;"></div>
-              <!-- box body -->
-              <div style="width:48px;height:38%;background:#fee2e2;border:2px solid #dc2626;border-radius:4px;position:relative;">
-                <!-- median -->
-                <div style="position:absolute;left:0;right:0;top:50%;height:2px;background:#dc2626;"></div>
-              </div>
-              <!-- whisker bottom -->
-              <div style="width:2px;height:6%;background:#94a3b8;"></div>
-            </div>
-            <div style="text-align:center;">
-              <div style="font-size:0.82rem;font-weight:700;color:var(--red);">❌ No-Show</div>
-              <div style="font-size:0.7rem;color:var(--muted);">Median: 2 prior no-shows</div>
-              <div style="font-size:0.7rem;color:var(--muted);">IQR: 1–3</div>
-            </div>
-          </div>
-        </div>
-        <div style="text-align:center;font-size:0.7rem;color:var(--muted);font-family:'DM Mono',monospace;margin-top:8px;">PRIOR NO-SHOW COUNT</div>
-        <div class="insight-box red-box" style="margin-top:16px;">
-          🧠 <span>The two box plots have <strong>almost no overlap</strong> — patrons who show up have near-zero prior no-show history, while no-show patrons cluster at 1–3 prior incidents. This is statistically significant separation.</span>
-        </div>
-      </div>
-
-      <!-- Bar Chart: No-Show Rate by Prior History -->
-      <div class="chart-wrap">
-        <div class="chart-header">
-          <div>
-            <div class="chart-label">No-Show Rate by Prior History</div>
-            <div class="chart-desc">How recurrence probability grows with each past incident</div>
-          </div>
-        </div>
-        <div style="display:flex;align-items:flex-end;gap:10px;height:160px;margin-bottom:8px;padding:0 4px;">
-          <div style="display:flex;flex-direction:column;align-items:center;gap:4px;flex:1;">
-            <span style="font-size:0.72rem;font-family:'DM Mono',monospace;font-weight:600;color:var(--green);">18%</span>
-            <div style="width:100%;height:18%;background:var(--green);border-radius:6px 6px 0 0;cursor:pointer;transition:filter 0.2s;" onmouseenter="showBarTip(this,'0 prior no-shows → 18% risk')" onmouseleave="hideBarTip(this)"></div>
-            <span style="font-size:0.68rem;color:var(--muted);font-family:'DM Mono',monospace;">0 prior</span>
-          </div>
-          <div style="display:flex;flex-direction:column;align-items:center;gap:4px;flex:1;">
-            <span style="font-size:0.72rem;font-family:'DM Mono',monospace;font-weight:600;color:#d97706;">28%</span>
-            <div style="width:100%;height:28%;background:#d97706;border-radius:6px 6px 0 0;cursor:pointer;transition:filter 0.2s;" onmouseenter="showBarTip(this,'1 prior no-show → 28% risk')" onmouseleave="hideBarTip(this)"></div>
-            <span style="font-size:0.68rem;color:var(--muted);font-family:'DM Mono',monospace;">1 prior</span>
-          </div>
-          <div style="display:flex;flex-direction:column;align-items:center;gap:4px;flex:1;position:relative;">
-            <span style="font-size:0.72rem;font-family:'DM Mono',monospace;font-weight:700;color:var(--red);">55.6%</span>
-            <div style="width:100%;height:55.6%;background:var(--red);border-radius:6px 6px 0 0;cursor:pointer;transition:filter 0.2s;position:relative;" onmouseenter="showBarTip(this,'2 prior no-shows → 55.6% risk ⚠️')" onmouseleave="hideBarTip(this)">
-              <div style="position:absolute;top:-22px;left:50%;transform:translateX(-50%);background:var(--red);color:white;font-size:0.6rem;padding:2px 6px;border-radius:4px;white-space:nowrap;font-family:'DM Mono',monospace;">⚠️ CRITICAL</div>
-            </div>
-            <span style="font-size:0.68rem;color:var(--muted);font-family:'DM Mono',monospace;">2 prior</span>
-          </div>
-          <div style="display:flex;flex-direction:column;align-items:center;gap:4px;flex:1;">
-            <span style="font-size:0.72rem;font-family:'DM Mono',monospace;font-weight:700;color:var(--red);">68%</span>
-            <div style="width:100%;height:68%;background:#7f1d1d;border-radius:6px 6px 0 0;cursor:pointer;transition:filter 0.2s;" onmouseenter="showBarTip(this,'3+ prior no-shows → 68% risk')" onmouseleave="hideBarTip(this)"></div>
-            <span style="font-size:0.68rem;color:var(--muted);font-family:'DM Mono',monospace;">3+ prior</span>
-          </div>
-        </div>
-        <div style="display:flex;align-items:center;gap:4px;margin:8px 0;">
-          <div style="flex:1;height:1px;background:#e2e8f0;"></div>
-          <span style="font-size:0.65rem;color:var(--muted);font-family:'DM Mono',monospace;white-space:nowrap;">PRIOR NO-SHOW COUNT</span>
-          <div style="flex:1;height:1px;background:#e2e8f0;"></div>
-        </div>
-        <div class="insight-box red-box">
-          📈 <span>Patrons with 2+ prior no-shows have a <strong>55.6% recurrence rate</strong> — nearly double the overall 29.2% average. This is the strongest single predictor available and directly feeds the ML model.</span>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Section 04: Hub Heatmap -->
-  <div style="background:#f8faff;padding:0 0 4px;">
-  <div class="story-section">
-    <div class="section-header">
-      <div class="section-num">04</div>
-      <div><div class="section-title">Hub & Time Slot Stress Map</div></div>
-    </div>
-    <div class="section-subtitle">Identifying operational pressure points across hubs and pickup times — click any cell to drill down</div>
-
-    <div class="chart-wrap">
-      <div class="chart-header">
-        <div>
-          <div class="chart-label">No-Show Rate Heatmap — Hub × Time Slot</div>
-          <div class="chart-desc">Color intensity indicates no-show rate. Red = high risk. Click any cell for details.</div>
-        </div>
-        <div style="display:flex;align-items:center;gap:8px;font-size:0.72rem;color:var(--muted);">
-          <span>Low</span>
-          <div style="width:80px;height:10px;border-radius:4px;background:linear-gradient(90deg,#d1fae5,#fef3c7,#fee2e2,#7f1d1d);"></div>
-          <span>High</span>
-        </div>
-      </div>
-
-      <!-- Heatmap -->
-      <div style="overflow-x:auto;">
-        <div style="min-width:500px;">
-          <div style="display:flex;margin-bottom:6px;margin-left:68px;gap:4px;">
-            <div style="width:80px;text-align:center;font-size:0.72rem;color:var(--muted);font-weight:600;">🌅 Morning</div>
-            <div style="width:80px;text-align:center;font-size:0.72rem;color:var(--muted);font-weight:600;">☀️ Afternoon</div>
-            <div style="width:80px;text-align:center;font-size:0.72rem;color:var(--muted);font-weight:600;">🌆 Evening</div>
-          </div>
-          <div id="heatmap-grid"></div>
-        </div>
-      </div>
-
-      <div class="insight-box red-box" style="margin-top:16px;">
-        🔥 <span><strong>Hub 6 during Morning shows a 100% no-show rate</strong> in the analyzed sample — a clear systemic pattern. Hubs 3 and 9 also show elevated morning stress. This level of granularity is impossible to see in aggregate averages — only the heatmap reveals it.</span>
-      </div>
-    </div>
-  </div>
-  </div>
-
-  <!-- Section 05: Inventory Impact -->
-  <div class="story-section">
-    <div class="section-header">
-      <div class="section-num">05</div>
-      <div><div class="section-title">Inventory Lock-Up Impact</div></div>
-    </div>
-    <div class="section-subtitle">The hidden operational cost of every no-show — blocked hours and wasted staff time add up fast</div>
-
-    <div class="grid-2" style="gap:20px;">
-      <div class="chart-wrap">
-        <div class="chart-header">
-          <div>
-            <div class="chart-label">Blocked Hours Distribution</div>
-            <div class="chart-desc">How long items stay locked after a no-show event</div>
-          </div>
-        </div>
-        <div style="display:flex;align-items:flex-end;gap:8px;height:140px;margin-bottom:8px;">
-          <div style="display:flex;flex-direction:column;align-items:center;gap:4px;flex:1;">
-            <span style="font-size:0.72rem;font-family:'DM Mono',monospace;font-weight:600;">8%</span>
-            <div style="width:100%;height:8%;background:#6ee7b7;border-radius:4px 4px 0 0;"></div>
-            <span style="font-size:0.65rem;color:var(--muted);font-family:'DM Mono',monospace;">0h</span>
-          </div>
-          <div style="display:flex;flex-direction:column;align-items:center;gap:4px;flex:1;">
-            <span style="font-size:0.72rem;font-family:'DM Mono',monospace;font-weight:600;">18%</span>
-            <div style="width:100%;height:18%;background:#34d399;border-radius:4px 4px 0 0;"></div>
-            <span style="font-size:0.65rem;color:var(--muted);font-family:'DM Mono',monospace;">1–12h</span>
-          </div>
-          <div style="display:flex;flex-direction:column;align-items:center;gap:4px;flex:1;">
-            <span style="font-size:0.72rem;font-family:'DM Mono',monospace;font-weight:600;color:var(--red);">38%</span>
-            <div style="width:100%;height:38%;background:#f59e0b;border-radius:4px 4px 0 0;"></div>
-            <span style="font-size:0.65rem;color:var(--muted);font-family:'DM Mono',monospace;">24–36h</span>
-          </div>
-          <div style="display:flex;flex-direction:column;align-items:center;gap:4px;flex:1;">
-            <span style="font-size:0.72rem;font-family:'DM Mono',monospace;font-weight:600;color:var(--red);">29%</span>
-            <div style="width:100%;height:29%;background:#ef4444;border-radius:4px 4px 0 0;"></div>
-            <span style="font-size:0.65rem;color:var(--muted);font-family:'DM Mono',monospace;">48–60h</span>
-          </div>
-          <div style="display:flex;flex-direction:column;align-items:center;gap:4px;flex:1;">
-            <span style="font-size:0.72rem;font-family:'DM Mono',monospace;font-weight:600;color:#7f1d1d;">7%</span>
-            <div style="width:100%;height:7%;background:#7f1d1d;border-radius:4px 4px 0 0;"></div>
-            <span style="font-size:0.65rem;color:var(--muted);font-family:'DM Mono',monospace;">60–72h</span>
-          </div>
-        </div>
-        <div class="insight-box red-box">
-          ⏰ <span><strong>67% of no-shows block inventory for 24–60+ hours.</strong> Average block = 48 hours. During this time other residents see the item as "unavailable" even though it's on the shelf.</span>
-        </div>
-      </div>
-
-      <div class="chart-wrap">
-        <div class="chart-header">
-          <div>
-            <div class="chart-label">Staff Preparation Time Wasted</div>
-            <div class="chart-desc">Minutes spent preparing per no-show event — completely wasted labor</div>
-          </div>
-        </div>
-        <div style="padding:16px 0;">
-          <div style="text-align:center;margin-bottom:20px;">
-            <div style="font-family:'Syne',sans-serif;font-size:3rem;font-weight:800;color:var(--red);">28 <span style="font-size:1.4rem;">min</span></div>
-            <div style="font-size:0.85rem;color:var(--muted);">Average preparation time per no-show</div>
-          </div>
-          <div style="display:flex;justify-content:space-around;gap:12px;flex-wrap:wrap;">
-            <div style="text-align:center;">
-              <div style="font-family:'Syne',sans-serif;font-size:1.4rem;font-weight:800;color:#7f1d1d;">340 hrs</div>
-              <div style="font-size:0.72rem;color:var(--muted);">Est. monthly waste<br>across 12 hubs</div>
-            </div>
-            <div style="text-align:center;">
-              <div style="font-family:'Syne',sans-serif;font-size:1.4rem;font-weight:800;color:var(--red);">730</div>
-              <div style="font-size:0.72rem;color:var(--muted);">No-shows per<br>2,500 reservations</div>
-            </div>
-            <div style="text-align:center;">
-              <div style="font-family:'Syne',sans-serif;font-size:1.4rem;font-weight:800;color:var(--amber);">$0</div>
-              <div style="font-size:0.72rem;color:var(--muted);">Revenue recovered<br>per no-show</div>
-            </div>
-          </div>
-        </div>
-        <div class="insight-box">
-          🎯 <span>If we reach the <strong>18% target</strong>, we save approximately <strong>118 hours/month</strong> of wasted staff preparation time across all 12 hubs — redirectable to better patron service.</span>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Call to action -->
-  <div style="background:linear-gradient(135deg,var(--teal-dark),var(--navy));padding:60px 2rem;text-align:center;">
-    <div style="font-family:'Syne',sans-serif;font-size:2rem;font-weight:800;color:white;margin-bottom:12px;">The Data Has Spoken. Now See the Solution.</div>
-    <p style="color:rgba(255,255,255,0.7);max-width:500px;margin:0 auto 28px;">The patterns are clear. No-shows are predictable. Machine learning can flag them before deadlines expire.</p>
-    <button class="btn btn-amber" onclick="showPage('solution')" style="font-size:1rem;padding:14px 36px;">→ Explore the Solution Prototype</button>
-  </div>
-
-</div><!-- end page-story -->
-
-
-<!-- ═══════════════════════════════════════════════════ -->
-<!-- PAGE: SOLUTION -->
-<!-- ═══════════════════════════════════════════════════ -->
-<div class="page" id="page-solution">
-  <div class="solution-hero">
-    <div class="hero-tag">🎯 OUR SOLUTION</div>
-    <h2>BorrowBox Predictive<br>Analytics System</h2>
-    <p>A machine learning powered dashboard that flags high-risk reservations before pickup deadlines expire — giving staff time to intervene.</p>
-  </div>
-
-  <div style="max-width:1200px;margin:0 auto;padding:40px 2rem;">
-
-    <!-- Objective -->
-    <div class="card" style="margin-bottom:28px;border-left:4px solid var(--teal);">
-      <div class="card-title">🎯 Prototype Objective</div>
-      <p style="font-size:0.95rem;line-height:1.7;color:var(--slate);">Demonstrate a functional prototype of the BorrowBox Predictive Reservation Analytics System — showing how staff and administrators would interact with the system to reduce no-show rates from 29.2% to ≤18% across all 12 Toronto hubs. Navigate through each module using the top navigation bar.</p>
-    </div>
-
-    <!-- How it works - flow -->
-    <h2 style="font-family:'Syne',sans-serif;font-size:1.6rem;font-weight:700;margin-bottom:8px;color:var(--navy);">How the System Works</h2>
-    <p style="color:var(--muted);margin-bottom:24px;font-size:0.9rem;">End-to-end flow from reservation to intervention to outcome — click each step</p>
-
-    <div class="flow-steps" style="margin-bottom:40px;">
-      <div class="flow-step" onclick="showFlowDetail(1)">
-        <div class="flow-icon" style="background:#dbeafe;box-shadow-color:#3b82f6;border-color:white;">📱</div>
-        <div class="flow-step-title">Patron Books</div>
-        <div class="flow-step-desc">Via BorrowBox app</div>
-      </div>
-      <div class="flow-step" onclick="showFlowDetail(2)">
-        <div class="flow-icon" style="background:#d1fae5;border-color:white;">🤖</div>
-        <div class="flow-step-title">ML Scores Risk</div>
-        <div class="flow-step-desc">0.00–1.00 score</div>
-      </div>
-      <div class="flow-step" onclick="showFlowDetail(3)">
-        <div class="flow-icon" style="background:#fef3c7;border-color:white;">🔔</div>
-        <div class="flow-step-title">Alert Triggered</div>
-        <div class="flow-step-desc">If score > 0.6</div>
-      </div>
-      <div class="flow-step" onclick="showFlowDetail(4)">
-        <div class="flow-icon" style="background:#ede9fe;border-color:white;">👷</div>
-        <div class="flow-step-title">Staff Acts</div>
-        <div class="flow-step-desc">Reminder sent</div>
-      </div>
-      <div class="flow-step" onclick="showFlowDetail(5)">
-        <div class="flow-icon" style="background:#d1fae5;border-color:white;">📊</div>
-        <div class="flow-step-title">Outcome Logged</div>
-        <div class="flow-step-desc">Model learns</div>
+  <!-- ══ PAGE: SCAN OUT ══════════════════════════════════════════ -->
+  <div class="page active page-content" id="pg-scanout">
+    <div class="ph">
+      <div><div class="page-title">Scan Out — Item Checkout</div><div class="page-sub">Scan the item QR code when a patron collects their reservation</div></div>
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-outline btn-sm" onclick="toast('Manual entry mode activated')">Manual Entry</button>
+        <button class="btn btn-dark btn-sm" onclick="openModal('modal-newres')">New Walk-In</button>
       </div>
     </div>
 
-    <!-- KPI Projection -->
-    <h2 style="font-family:'Syne',sans-serif;font-size:1.6rem;font-weight:700;margin-bottom:8px;color:var(--navy);">Projected Impact After Implementation</h2>
-    <p style="color:var(--muted);margin-bottom:24px;font-size:0.9rem;">Before vs. after our system — based on research benchmarks</p>
+    <div class="g12" style="margin-bottom:16px;">
 
-    <div class="grid-4" style="margin-bottom:40px;">
-      <div class="kpi-card">
-        <div class="kpi-icon">📉</div>
-        <div class="kpi-value" style="color:var(--green);">18%</div>
-        <div class="kpi-label">Target No-Show Rate</div>
-        <div class="kpi-change good">↓ from 29.2% (-11.2pp)</div>
-      </div>
-      <div class="kpi-card">
-        <div class="kpi-icon">🕐</div>
-        <div class="kpi-value" style="color:var(--teal);">34h</div>
-        <div class="kpi-label">Target Block Duration</div>
-        <div class="kpi-change good">↓ from 48h (-30%)</div>
-      </div>
-      <div class="kpi-card">
-        <div class="kpi-icon">⏱️</div>
-        <div class="kpi-value" style="color:var(--teal);">21m</div>
-        <div class="kpi-label">Target Prep Waste</div>
-        <div class="kpi-change good">↓ from 28min (-25%)</div>
-      </div>
-      <div class="kpi-card">
-        <div class="kpi-icon">🎯</div>
-        <div class="kpi-value" style="color:var(--amber);">0.82</div>
-        <div class="kpi-label">ML Model AUC</div>
-        <div class="kpi-change good">↑ Target ≥ 0.80</div>
-      </div>
-    </div>
-
-    <!-- Navigate CTA -->
-    <div class="grid-3" style="gap:16px;">
-      <div class="card" style="cursor:pointer;border:2px solid transparent;transition:border-color 0.2s;" onmouseenter="this.style.borderColor='var(--teal)'" onmouseleave="this.style.borderColor='transparent'" onclick="showPage('reservations')">
-        <div style="font-size:2rem;margin-bottom:12px;">📋</div>
-        <div style="font-family:'Syne',sans-serif;font-size:1.1rem;font-weight:700;margin-bottom:6px;">Reservation Risk Panel</div>
-        <p style="font-size:0.82rem;color:var(--muted);line-height:1.6;">See all upcoming reservations scored by no-show risk. Send reminders, flag high-risk, take action — all from one view.</p>
-        <div style="margin-top:16px;"><span class="tag tag-teal">Click to explore →</span></div>
-      </div>
-      <div class="card" style="cursor:pointer;border:2px solid transparent;transition:border-color 0.2s;" onmouseenter="this.style.borderColor='var(--amber)'" onmouseleave="this.style.borderColor='transparent'" onclick="showPage('hubs')">
-        <div style="font-size:2rem;margin-bottom:12px;">🏢</div>
-        <div style="font-family:'Syne',sans-serif;font-size:1.1rem;font-weight:700;margin-bottom:6px;">Hub Monitor</div>
-        <p style="font-size:0.82rem;color:var(--muted);line-height:1.6;">Monitor all 12 hubs live. See inventory status, blocked items, and hub-level risk scores at a glance.</p>
-        <div style="margin-top:16px;"><span class="tag tag-amber">Click to explore →</span></div>
-      </div>
-      <div class="card" style="cursor:pointer;border:2px solid transparent;transition:border-color 0.2s;" onmouseenter="this.style.borderColor='var(--red)'" onmouseleave="this.style.borderColor='transparent'" onclick="showPage('model')">
-        <div style="font-size:2rem;margin-bottom:12px;">🤖</div>
-        <div style="font-family:'Syne',sans-serif;font-size:1.1rem;font-weight:700;margin-bottom:6px;">ML Prediction Engine</div>
-        <p style="font-size:0.82rem;color:var(--muted);line-height:1.6;">Enter reservation details and get an instant no-show risk score from the model. See which factors drive the prediction.</p>
-        <div style="margin-top:16px;"><span class="tag tag-red">Click to explore →</span></div>
-      </div>
-    </div>
-
-  </div>
-</div><!-- end page-solution -->
-
-
-<!-- ═══════════════════════════════════════════════════ -->
-<!-- PAGE: RESERVATIONS -->
-<!-- ═══════════════════════════════════════════════════ -->
-<div class="page" id="page-reservations">
-
-  <div style="background:var(--navy);padding:40px 2rem;">
-    <div style="max-width:1200px;margin:0 auto;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px;">
-      <div>
-        <div style="font-family:'Syne',sans-serif;font-size:1.8rem;font-weight:800;color:white;">📋 Reservation Risk Panel</div>
-        <div style="color:rgba(255,255,255,0.6);font-size:0.9rem;margin-top:4px;">All upcoming reservations scored by ML model — act before deadlines expire</div>
-      </div>
-      <button class="btn btn-amber" onclick="openNewReservation()">+ New Reservation</button>
-    </div>
-  </div>
-
-  <div style="max-width:1200px;margin:0 auto;padding:28px 2rem;">
-
-    <!-- Summary Row -->
-    <div class="grid-4" style="margin-bottom:24px;">
-      <div class="kpi-card"><div class="kpi-icon">📋</div><div class="kpi-value">2,500</div><div class="kpi-label">Total Reservations</div></div>
-      <div class="kpi-card"><div class="kpi-icon">🔴</div><div class="kpi-value" style="color:var(--red);">218</div><div class="kpi-label">High Risk Flagged</div><div class="kpi-change bad">↑ Need action today</div></div>
-      <div class="kpi-card"><div class="kpi-icon">🟡</div><div class="kpi-value" style="color:var(--amber);">374</div><div class="kpi-label">Medium Risk</div></div>
-      <div class="kpi-card"><div class="kpi-icon">🟢</div><div class="kpi-value" style="color:var(--green);">1,908</div><div class="kpi-label">Low Risk</div></div>
-    </div>
-
-    <!-- Tab group -->
-    <div class="tab-group">
-      <button class="tab-btn active" onclick="switchTab(this,'tab-all')">All Reservations</button>
-      <button class="tab-btn" onclick="switchTab(this,'tab-high')">🔴 High Risk (218)</button>
-      <button class="tab-btn" onclick="switchTab(this,'tab-today')">Today's Pickups</button>
-    </div>
-
-    <div class="tab-content active" id="tab-all">
-      <div style="overflow-x:auto;">
-        <table class="reservation-table">
-          <thead>
-            <tr>
-              <th>RESERVATION</th>
-              <th>PATRON</th>
-              <th>HUB</th>
-              <th>ITEM</th>
-              <th>PICKUP</th>
-              <th>LEAD TIME</th>
-              <th>PRIOR NS</th>
-              <th>RISK SCORE</th>
-              <th>RISK LEVEL</th>
-              <th>ACTIONS</th>
-            </tr>
-          </thead>
-          <tbody id="reservation-tbody"></tbody>
-        </table>
-      </div>
-    </div>
-
-    <div class="tab-content" id="tab-high">
-      <div style="overflow-x:auto;">
-        <table class="reservation-table">
-          <thead><tr><th>RESERVATION</th><th>PATRON</th><th>HUB</th><th>ITEM</th><th>PICKUP</th><th>RISK SCORE</th><th>RISK LEVEL</th><th>ACTIONS</th></tr></thead>
-          <tbody id="high-risk-tbody"></tbody>
-        </table>
-      </div>
-    </div>
-
-    <div class="tab-content" id="tab-today">
-      <div style="overflow-x:auto;">
-        <table class="reservation-table">
-          <thead><tr><th>RESERVATION</th><th>PATRON</th><th>HUB</th><th>TIME SLOT</th><th>RISK SCORE</th><th>REMINDER</th><th>ACTIONS</th></tr></thead>
-          <tbody id="today-tbody"></tbody>
-        </table>
-      </div>
-    </div>
-
-  </div>
-</div><!-- end page-reservations -->
-
-
-<!-- ═══════════════════════════════════════════════════ -->
-<!-- PAGE: HUB MONITOR -->
-<!-- ═══════════════════════════════════════════════════ -->
-<div class="page" id="page-hubs">
-  <div style="background:var(--navy);padding:40px 2rem;">
-    <div style="max-width:1200px;margin:0 auto;">
-      <div style="font-family:'Syne',sans-serif;font-size:1.8rem;font-weight:800;color:white;">🏢 Hub Live Monitor</div>
-      <div style="color:rgba(255,255,255,0.6);font-size:0.9rem;margin-top:4px;">Real-time status across all 12 BorrowBox neighbourhood hubs — click any hub card for detail</div>
-    </div>
-  </div>
-
-  <div style="max-width:1200px;margin:0 auto;padding:28px 2rem;">
-    <div class="grid-4" style="margin-bottom:28px;">
-      <div class="kpi-card"><div class="kpi-icon">🏢</div><div class="kpi-value">12</div><div class="kpi-label">Active Hubs</div></div>
-      <div class="kpi-card"><div class="kpi-icon">📦</div><div class="kpi-value" style="color:var(--red);">47</div><div class="kpi-label">Items Blocked Now</div></div>
-      <div class="kpi-card"><div class="kpi-icon">⚠️</div><div class="kpi-value" style="color:var(--amber);">3</div><div class="kpi-label">Hubs At High Risk</div></div>
-      <div class="kpi-card"><div class="kpi-icon">📬</div><div class="kpi-value" style="color:var(--green);">89</div><div class="kpi-label">Reminders Sent Today</div></div>
-    </div>
-    <div class="grid-3" id="hub-grid" style="gap:16px;"></div>
-  </div>
-</div><!-- end page-hubs -->
-
-
-<!-- ═══════════════════════════════════════════════════ -->
-<!-- PAGE: ML ENGINE -->
-<!-- ═══════════════════════════════════════════════════ -->
-<div class="page" id="page-model">
-  <div style="background:var(--navy);padding:40px 2rem;">
-    <div style="max-width:1200px;margin:0 auto;">
-      <div style="font-family:'Syne',sans-serif;font-size:1.8rem;font-weight:800;color:white;">🤖 ML Prediction Engine</div>
-      <div style="color:rgba(255,255,255,0.6);font-size:0.9rem;margin-top:4px;">Enter reservation details and get an instant no-show risk score — powered by Random Forest (AUC 0.82)</div>
-    </div>
-  </div>
-
-  <div style="max-width:1200px;margin:0 auto;padding:28px 2rem;">
-    <div class="grid-2" style="gap:28px;align-items:start;">
-
-      <!-- Input Form -->
-      <div class="card">
-        <div style="font-family:'Syne',sans-serif;font-size:1.2rem;font-weight:700;margin-bottom:20px;">📝 Reservation Details</div>
-        <div class="form-group">
-          <label class="form-label">Hub Location</label>
-          <select class="form-input" id="ml-hub" onchange="updatePrediction()">
-            <option value="1">Hub 1 — Downtown Core</option>
-            <option value="2">Hub 2 — Scarborough East</option>
-            <option value="3">Hub 3 — North York</option>
-            <option value="4">Hub 4 — Etobicoke</option>
-            <option value="5">Hub 5 — Yorkdale</option>
-            <option value="6">Hub 6 — Annex ⚠️</option>
-            <option value="7">Hub 7 — Danforth</option>
-            <option value="8">Hub 8 — Roncesvalles</option>
-            <option value="9">Hub 9 — St. Clair West</option>
-            <option value="10">Hub 10 — Leslieville</option>
-            <option value="11">Hub 11 — Junction</option>
-            <option value="12">Hub 12 — Riverdale</option>
-          </select>
-        </div>
-        <div class="form-grid">
-          <div class="form-group">
-            <label class="form-label">Item Category</label>
-            <select class="form-input" id="ml-cat" onchange="updatePrediction()">
-              <option value="tools">🔧 Tools</option>
-              <option value="sports">⚽ Sports</option>
-              <option value="camping">⛺ Camping</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label class="form-label">Pickup Time Slot</label>
-            <select class="form-input" id="ml-slot" onchange="updatePrediction()">
-              <option value="morning">🌅 Morning</option>
-              <option value="afternoon">☀️ Afternoon</option>
-              <option value="evening">🌆 Evening</option>
-            </select>
-          </div>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Reservation Lead Time (days): <strong id="ml-lead-val" style="color:var(--teal);">7 days</strong></label>
-          <input type="range" min="0" max="30" value="7" class="form-input" id="ml-lead" style="padding:4px;" oninput="document.getElementById('ml-lead-val').textContent=this.value+' days';updatePrediction()">
-        </div>
-        <div class="form-group">
-          <label class="form-label">Prior No-Show Count: <strong id="ml-prior-val" style="color:var(--red);">0</strong></label>
-          <input type="range" min="0" max="6" value="0" class="form-input" id="ml-prior" style="padding:4px;" oninput="document.getElementById('ml-prior-val').textContent=this.value;updatePrediction()">
-        </div>
-        <div class="form-group">
-          <label class="form-label">Weather Score (0=good, 1=bad): <strong id="ml-weather-val" style="color:var(--slate);">0.3</strong></label>
-          <input type="range" min="0" max="10" value="3" class="form-input" id="ml-weather" style="padding:4px;" oninput="document.getElementById('ml-weather-val').textContent=(this.value/10).toFixed(1);updatePrediction()">
-        </div>
-        <div class="form-group">
-          <label class="form-label">Reminder Sent?</label>
-          <div style="display:flex;gap:12px;margin-top:4px;">
-            <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:0.9rem;">
-              <input type="radio" name="ml-reminder" value="1" checked onchange="updatePrediction()"> ✅ Yes
-            </label>
-            <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:0.9rem;">
-              <input type="radio" name="ml-reminder" value="0" onchange="updatePrediction()"> ❌ No
-            </label>
-          </div>
-        </div>
-      </div>
-
-      <!-- Prediction Output -->
+      <!-- Scanner -->
       <div>
         <div class="card" style="margin-bottom:16px;">
-          <div style="font-family:'Syne',sans-serif;font-size:1.2rem;font-weight:700;margin-bottom:20px;">📊 Prediction Output</div>
-
-          <!-- Score Circle -->
-          <div style="display:flex;align-items:center;gap:24px;margin-bottom:20px;">
-            <div style="position:relative;width:120px;height:120px;flex-shrink:0;">
-              <svg width="120" height="120" viewBox="0 0 120 120">
-                <circle cx="60" cy="60" r="52" fill="none" stroke="#e2e8f0" stroke-width="10"/>
-                <circle cx="60" cy="60" r="52" fill="none" stroke="var(--teal)" stroke-width="10"
-                  stroke-dasharray="326.7" id="score-circle"
-                  stroke-dashoffset="245" stroke-linecap="round"
-                  transform="rotate(-90 60 60)" style="transition:stroke-dashoffset 0.6s ease,stroke 0.4s"/>
-              </svg>
-              <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;">
-                <div style="font-family:'Syne',sans-serif;font-size:1.6rem;font-weight:800;" id="score-display">0.25</div>
-                <div style="font-size:0.65rem;color:var(--muted);font-family:'DM Mono',monospace;">RISK SCORE</div>
-              </div>
+          <div class="card-title">QR Scanner</div>
+          <div class="card-sub">Click the scan zone to simulate scanning an item QR code</div>
+          <div class="scan-zone" id="sz-out" onclick="simulateScan('out')" style="height:180px;display:flex;flex-direction:column;align-items:center;justify-content:center;">
+            <div id="sz-out-icon">
+              <svg style="width:44px;height:44px;opacity:.25;display:block;margin:0 auto 12px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 7V5a2 2 0 012-2h2M17 3h2a2 2 0 012 2v2M21 17v2a2 2 0 01-2 2h-2M7 21H5a2 2 0 01-2-2v-2"/><rect x="7" y="7" width="10" height="10" rx="1"/><rect x="9" y="9" width="2" height="2"/><rect x="13" y="9" width="2" height="2"/><rect x="9" y="13" width="2" height="2"/><rect x="13" y="13" width="2" height="2"/></svg>
+              <div class="scan-label">Click to Scan QR Code</div>
+              <div class="scan-hint">Point scanner at item QR label</div>
             </div>
-            <div style="flex:1;">
-              <div id="risk-label-big" style="font-family:'Syne',sans-serif;font-size:1.4rem;font-weight:800;color:var(--green);margin-bottom:6px;">🟢 LOW RISK</div>
-              <div id="risk-desc" style="font-size:0.85rem;color:var(--muted);line-height:1.5;">This reservation has low no-show probability. Standard processing recommended.</div>
-              <div style="margin-top:12px;" id="risk-action-btn"></div>
+            <div id="sz-out-scanning" style="display:none;width:100%;text-align:center;">
+              <div style="font-size:12px;font-weight:600;color:var(--mid);letter-spacing:.5px;">SCANNING...</div>
+              <div style="width:60%;height:2px;background:var(--dark);border-radius:1px;margin:10px auto;animation:scan 1s ease infinite alternate;"></div>
+            </div>
+            <div id="sz-out-done" style="display:none;width:100%;text-align:center;">
+              <div style="font-size:12px;font-weight:700;color:var(--white);letter-spacing:.5px;">QR SCANNED</div>
+              <div style="font-size:22px;font-weight:800;color:var(--white);font-family:'JetBrains Mono',monospace;margin-top:8px;" id="sz-out-id">BB-0472</div>
             </div>
           </div>
-
-          <!-- Factor Breakdown -->
-          <div style="border-top:1px solid #f1f5f9;padding-top:16px;">
-            <div style="font-size:0.82rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:12px;">Feature Importance</div>
-            <div id="feature-bars"></div>
-          </div>
+          <style>@keyframes scan{from{opacity:.3}to{opacity:1}}</style>
         </div>
 
-        <!-- Model Info -->
-        <div class="card" style="font-size:0.82rem;">
-          <div style="font-weight:700;margin-bottom:8px;color:var(--navy);">🤖 Model Details</div>
-          <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;">
-            <div><span style="color:var(--muted);">Algorithm:</span> <strong>Random Forest</strong></div>
-            <div><span style="color:var(--muted);">AUC Score:</span> <strong style="color:var(--green);">0.82</strong></div>
-            <div><span style="color:var(--muted);">Train/Test:</span> <strong>80/20</strong></div>
-            <div><span style="color:var(--muted);">Threshold:</span> <strong>0.60</strong></div>
+        <!-- Item result -->
+        <div class="result-card hidden" id="result-out">
+          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;color:rgba(255,255,255,.4);margin-bottom:14px;">Item Found</div>
+          <div class="rc-grid">
+            <div><div class="rc-label">Item ID</div><div class="rc-val mono">BB-0472</div></div>
+            <div><div class="rc-label">Category</div><div class="rc-val">Camping Tent</div></div>
+            <div><div class="rc-label">Last Condition</div><div class="rc-val">Good</div></div>
+            <div><div class="rc-label">Hub</div><div class="rc-val">Hub 6 — Annex</div></div>
           </div>
+          <div style="margin-top:14px;padding-top:14px;border-top:1px solid rgba(255,255,255,.1);">
+            <div class="rc-label">Matched Reservation</div>
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-top:6px;">
+              <div><div class="rc-val">P-3655 — Arjun Mehta</div><div style="font-size:11px;color:rgba(255,255,255,.35);margin-top:2px;">Reserved Apr 1 · Morning slot · 3-day loan</div></div>
+              <span class="pill p-good" style="font-size:10px;">MATCHED</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Checkout form -->
+      <div class="card" id="checkout-form" style="opacity:.4;pointer-events:none;">
+        <div class="card-title">Checkout Details</div>
+        <div class="card-sub">Confirm details and complete checkout</div>
+        <div class="fr">
+          <div class="fg"><label class="fl">Patron ID</label><input class="fc" id="co-patron" value="P-3655" readonly></div>
+          <div class="fg"><label class="fl">Patron Name</label><input class="fc" value="Arjun Mehta" readonly></div>
+        </div>
+        <div class="fr">
+          <div class="fg"><label class="fl">Item ID</label><input class="fc" value="BB-0472" readonly></div>
+          <div class="fg"><label class="fl">Item Name</label><input class="fc" value="Camping Tent" readonly></div>
+        </div>
+        <div class="fr">
+          <div class="fg"><label class="fl">Checkout Date</label><input class="fc" type="date" id="co-date"></div>
+          <div class="fg"><label class="fl">Return Due Date</label><input class="fc" type="date" id="co-return"></div>
+        </div>
+        <div class="fg"><label class="fl">Item Condition at Checkout</label>
+          <select class="fc" id="co-cond">
+            <option value="good">Good — no damage visible</option>
+            <option value="minor">Minor wear — noted</option>
+            <option value="damaged">Pre-existing damage — noted</option>
+          </select>
+        </div>
+        <div class="fg"><label class="fl">Staff Notes (optional)</label><textarea class="fc" placeholder="Any notes about the item or patron..."></textarea></div>
+        <div style="display:flex;gap:9px;margin-top:6px;">
+          <button class="btn btn-dark" style="flex:1;" onclick="completeCheckout()">Complete Checkout</button>
+          <button class="btn btn-outline" onclick="resetScan('out')">Cancel</button>
         </div>
       </div>
     </div>
 
-    <!-- Comparison panel -->
-    <div class="card" style="margin-top:28px;">
-      <div style="font-family:'Syne',sans-serif;font-size:1.1rem;font-weight:700;margin-bottom:16px;">📈 Model Comparison — All Three Algorithms</div>
-      <div class="grid-3" style="gap:16px;">
-        <div style="border:2px solid var(--teal);border-radius:12px;padding:16px;background:#f0fdf9;">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-            <div style="font-weight:700;color:var(--teal);">Random Forest</div>
-            <span class="tag tag-teal">BEST</span>
-          </div>
-          <div style="font-family:'Syne',sans-serif;font-size:1.8rem;font-weight:800;color:var(--teal);">0.82</div>
-          <div style="font-size:0.75rem;color:var(--muted);">AUC Score</div>
-          <div class="progress-bar-track" style="margin-top:10px;"><div class="progress-bar-fill" style="width:82%;background:var(--teal);"></div></div>
-        </div>
-        <div style="border:1.5px solid #e2e8f0;border-radius:12px;padding:16px;">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-            <div style="font-weight:700;color:var(--navy);">Gradient Boosting</div>
-          </div>
-          <div style="font-family:'Syne',sans-serif;font-size:1.8rem;font-weight:800;color:var(--amber);">0.79</div>
-          <div style="font-size:0.75rem;color:var(--muted);">AUC Score</div>
-          <div class="progress-bar-track" style="margin-top:10px;"><div class="progress-bar-fill" style="width:79%;background:var(--amber);"></div></div>
-        </div>
-        <div style="border:1.5px solid #e2e8f0;border-radius:12px;padding:16px;">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-            <div style="font-weight:700;color:var(--navy);">Logistic Regression</div>
-          </div>
-          <div style="font-family:'Syne',sans-serif;font-size:1.8rem;font-weight:800;color:var(--muted);">0.71</div>
-          <div style="font-size:0.75rem;color:var(--muted);">AUC Score</div>
-          <div class="progress-bar-track" style="margin-top:10px;"><div class="progress-bar-fill" style="width:71%;background:#94a3b8;"></div></div>
-        </div>
+    <!-- Today's checkouts -->
+    <div class="card">
+      <div class="card-title">Today's Checkouts — Hub 6</div>
+      <div class="card-sub">Items scanned out today at this hub</div>
+      <div class="tw">
+        <table>
+          <thead><tr><th>Item ID</th><th>Item</th><th>Patron</th><th>Time</th><th>Condition</th><th>Due Back</th><th>Status</th></tr></thead>
+          <tbody>
+            <tr><td class="mono">BB-0391</td><td>Power Drill</td><td>P-4796 — L. Okafor</td><td class="mono">08:14</td><td><span class="pill p-good">Good</span></td><td class="mono">Apr 4</td><td><span class="pill p-out">Checked Out</span></td></tr>
+            <tr><td class="mono">BB-0142</td><td>Kayak Paddle</td><td>P-4662 — R. Singh</td><td class="mono">09:32</td><td><span class="pill p-dmg">Minor Wear</span></td><td class="mono">Apr 3</td><td><span class="pill p-out">Checked Out</span></td></tr>
+            <tr><td class="mono">BB-0289</td><td>Soccer Ball</td><td>P-2823 — T. Nguyen</td><td class="mono">10:05</td><td><span class="pill p-good">Good</span></td><td class="mono">Apr 3</td><td><span class="pill p-out">Checked Out</span></td></tr>
+            <tr><td class="mono">BB-0517</td><td>Sleeping Bag</td><td>P-1890 — M. Patel</td><td class="mono">11:18</td><td><span class="pill p-good">Good</span></td><td class="mono">Apr 5</td><td><span class="pill p-out">Checked Out</span></td></tr>
+          </tbody>
+        </table>
       </div>
     </div>
-
   </div>
-</div><!-- end page-model -->
 
+  <!-- ══ PAGE: SCAN IN ═══════════════════════════════════════════ -->
+  <div class="page page-content" id="pg-scanin">
+    <div class="ph">
+      <div><div class="page-title">Scan In — Item Return</div><div class="page-sub">Scan the item QR code when a patron returns it and log the condition</div></div>
+    </div>
 
-<!-- ═══════════════════════════════════════════════════ -->
+    <div class="g12" style="margin-bottom:16px;">
+
+      <div>
+        <div class="card" style="margin-bottom:16px;">
+          <div class="card-title">QR Scanner</div>
+          <div class="card-sub">Click to scan the returning item</div>
+          <div class="scan-zone" id="sz-in" onclick="simulateScan('in')" style="height:180px;display:flex;flex-direction:column;align-items:center;justify-content:center;">
+            <div id="sz-in-icon">
+              <svg style="width:44px;height:44px;opacity:.25;display:block;margin:0 auto 12px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 7V5a2 2 0 012-2h2M17 3h2a2 2 0 012 2v2M21 17v2a2 2 0 01-2 2h-2M7 21H5a2 2 0 01-2-2v-2"/><rect x="7" y="7" width="10" height="10" rx="1"/><rect x="9" y="9" width="2" height="2"/><rect x="13" y="9" width="2" height="2"/><rect x="9" y="13" width="2" height="2"/><rect x="13" y="13" width="2" height="2"/></svg>
+              <div class="scan-label">Click to Scan Returning Item</div>
+              <div class="scan-hint">Scan the QR label on the returned item</div>
+            </div>
+            <div id="sz-in-scanning" style="display:none;width:100%;text-align:center;">
+              <div style="font-size:12px;font-weight:600;color:var(--mid);letter-spacing:.5px;">SCANNING...</div>
+              <div style="width:60%;height:2px;background:var(--dark);border-radius:1px;margin:10px auto;animation:scan 1s ease infinite alternate;"></div>
+            </div>
+            <div id="sz-in-done" style="display:none;width:100%;text-align:center;">
+              <div style="font-size:12px;font-weight:700;color:var(--white);letter-spacing:.5px;">ITEM SCANNED</div>
+              <div style="font-size:22px;font-weight:800;color:var(--white);font-family:'JetBrains Mono',monospace;margin-top:8px;">BB-0391</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="result-card hidden" id="result-in">
+          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;color:rgba(255,255,255,.4);margin-bottom:14px;">Returning Item</div>
+          <div class="rc-grid">
+            <div><div class="rc-label">Item ID</div><div class="rc-val mono">BB-0391</div></div>
+            <div><div class="rc-label">Category</div><div class="rc-val">Power Drill</div></div>
+            <div><div class="rc-label">Checked Out By</div><div class="rc-val">P-4796 — L. Okafor</div></div>
+            <div><div class="rc-label">Condition at Checkout</div><div class="rc-val">Good</div></div>
+          </div>
+          <div style="margin-top:14px;padding-top:14px;border-top:1px solid rgba(255,255,255,.1);">
+            <div class="rc-label">Loan Duration</div>
+            <div class="rc-val" style="margin-top:4px;">Checked out Apr 1 &rarr; Returned Apr 3 &nbsp;<span style="font-size:11px;color:rgba(255,255,255,.4);">(2 days — on time)</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Return form -->
+      <div class="card" id="return-form" style="opacity:.4;pointer-events:none;">
+        <div class="card-title">Return Condition Assessment</div>
+        <div class="card-sub">Log the condition of the item before releasing the patron</div>
+
+        <div class="fg"><label class="fl">Condition on Return</label>
+          <select class="fc" id="ret-cond" onchange="checkCondition()">
+            <option value="">Select condition...</option>
+            <option value="good">Good — no change from checkout</option>
+            <option value="minor">Minor wear — acceptable</option>
+            <option value="damaged">Damaged — repairs needed</option>
+            <option value="missing">Missing parts — incomplete return</option>
+            <option value="unusable">Unusable — write-off required</option>
+          </select>
+        </div>
+
+        <div id="damage-section" style="display:none;">
+          <div class="fg"><label class="fl">Damage Description</label><textarea class="fc" placeholder="Describe the damage in detail..."></textarea></div>
+          <div class="fg"><label class="fl">Estimated Repair Time</label>
+            <select class="fc"><option>1–3 days</option><option>4–7 days</option><option>1–2 weeks</option><option>Replace entirely</option></select>
+          </div>
+          <div style="background:var(--bg2);border-radius:6px;padding:12px;margin-bottom:12px;">
+            <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--mid);margin-bottom:4px;">System Action</div>
+            <div style="font-size:12.5px;color:var(--dark);">Item will be flagged <strong>Out of Service</strong> and patron P-4796 will be notified. A damage incident will be logged to their profile.</div>
+          </div>
+        </div>
+
+        <div class="fg"><label class="fl">Staff Signature / ID</label><input class="fc" placeholder="Staff ID or initials..." value="JM-06"></div>
+        <div class="fg"><label class="fl">Additional Notes</label><textarea class="fc" placeholder="Anything else to note..."></textarea></div>
+
+        <div style="display:flex;gap:9px;margin-top:6px;">
+          <button class="btn btn-dark" style="flex:1;" onclick="completeReturn()">Complete Return</button>
+          <button class="btn btn-outline" onclick="resetScan('in')">Cancel</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Today's returns -->
+    <div class="card">
+      <div class="card-title">Today's Returns — Hub 6</div>
+      <div class="card-sub">Items scanned in today with logged condition</div>
+      <div class="tw">
+        <table>
+          <thead><tr><th>Item ID</th><th>Item</th><th>Patron</th><th>Return Time</th><th>Checkout Cond.</th><th>Return Cond.</th><th>Action Required</th></tr></thead>
+          <tbody>
+            <tr><td class="mono">BB-0204</td><td>Camping Stove</td><td>P-3778</td><td class="mono">08:45</td><td><span class="pill p-good">Good</span></td><td><span class="pill p-dmg">Damaged</span></td><td style="font-size:12px;font-weight:600;">Repair — 3 days</td></tr>
+            <tr><td class="mono">BB-0318</td><td>Hand Saw</td><td>P-4932</td><td class="mono">09:10</td><td><span class="pill p-good">Good</span></td><td><span class="pill p-good">Good</span></td><td style="font-size:12px;color:var(--muted);">None</td></tr>
+            <tr><td class="mono">BB-0455</td><td>Basketball</td><td>P-4901</td><td class="mono">10:50</td><td><span class="pill p-good">Good</span></td><td><span class="pill p-miss">Missing Parts</span></td><td style="font-size:12px;font-weight:600;">Source pump — 7 days</td></tr>
+            <tr><td class="mono">BB-0077</td><td>Extension Ladder</td><td>P-1279</td><td class="mono">11:30</td><td><span class="pill p-good">Good</span></td><td><span class="pill p-bad">Unusable</span></td><td style="font-size:12px;font-weight:600;color:var(--black);">Write-off — replace</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ PAGE: OVERDUE ALERTS ════════════════════════════════════ -->
+  <div class="page page-content" id="pg-alerts">
+    <div class="ph">
+      <div><div class="page-title">Overdue Alerts</div><div class="page-sub">Items not returned by their due date — system-generated alerts across all 12 hubs</div></div>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <select class="fc" style="width:140px;" onchange="toast('Filter applied')"><option>All Hubs</option><option>Hub 6 — Annex</option><option>Hub 3 — North York</option><option>Hub 9 — St Clair W.</option></select>
+        <select class="fc" style="width:140px;" onchange="toast('Filter applied')"><option>All Categories</option><option>Tools</option><option>Sports</option><option>Camping</option></select>
+        <button class="btn btn-dark btn-sm" onclick="toast('Bulk reminders sent to all overdue patrons')">Send All Reminders</button>
+      </div>
+    </div>
+
+    <div class="g4" style="margin-bottom:20px;">
+      <div class="kpi"><div class="kpi-val">47</div><div class="kpi-lbl">Total Overdue</div><div class="kpi-delta">Across all 12 hubs</div></div>
+      <div class="kpi"><div class="kpi-val">12</div><div class="kpi-lbl">Critical (&gt;30 days)</div><div class="kpi-delta">Likely never returning</div></div>
+      <div class="kpi"><div class="kpi-val">$8,400</div><div class="kpi-lbl">At-Risk Value</div><div class="kpi-delta">Replacement cost</div></div>
+      <div class="kpi"><div class="kpi-val">23</div><div class="kpi-lbl">Reminders Sent Today</div><div class="kpi-delta">Auto-dispatched</div></div>
+    </div>
+
+    <div class="g2" style="margin-bottom:18px;">
+      <div class="card">
+        <div class="card-title">Critical Overdue Items (&gt;30 Days)</div>
+        <div class="card-sub">These items are very likely missing — escalation recommended</div>
+        <div id="alert-list-critical">
+          <!-- populated by JS -->
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Warning — Overdue 7–30 Days</div>
+        <div class="card-sub">Patron reminders already sent — awaiting response</div>
+        <div id="alert-list-warning"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Overdue Items — Full List</div>
+      <div class="card-sub">All items past their return due date across all hubs</div>
+      <div class="search-bar"><input class="search-input" placeholder="Search by item, patron, or hub..." oninput="filterAlerts(this.value)"></div>
+      <div class="tw">
+        <table>
+          <thead><tr><th>Item ID</th><th>Item</th><th>Patron</th><th>Hub</th><th>Due Date</th><th>Days Overdue</th><th>Last Contact</th><th>Action</th></tr></thead>
+          <tbody id="alert-table-body"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ PAGE: LIVE INVENTORY ════════════════════════════════════ -->
+  <div class="page page-content" id="pg-inventory">
+    <div class="ph">
+      <div><div class="page-title">Live Inventory</div><div class="page-sub">Real-time availability of all items across all 12 hubs — updated on every scan</div></div>
+      <button class="btn btn-dark btn-sm" onclick="toast('Inventory report exported to CSV')">Export Report</button>
+    </div>
+
+    <div class="g4" style="margin-bottom:20px;">
+      <div class="kpi"><div class="kpi-val">1,842</div><div class="kpi-lbl">Total Items</div><div class="kpi-delta">Across 12 hubs</div></div>
+      <div class="kpi"><div class="kpi-val">714</div><div class="kpi-lbl">Available Now</div><div class="kpi-delta">38.8% of total</div></div>
+      <div class="kpi"><div class="kpi-val">585</div><div class="kpi-lbl">Missing / Overdue</div><div class="kpi-delta">23.4% not returned</div></div>
+      <div class="kpi"><div class="kpi-val">543</div><div class="kpi-lbl">Out for Repair</div><div class="kpi-delta">29.5% under repair</div></div>
+    </div>
+
+    <div class="g2" style="margin-bottom:18px;">
+      <div class="card">
+        <div class="card-title">Availability by Hub</div>
+        <div class="card-sub">Percentage of each hub's inventory currently available</div>
+        <div id="hub-avail-bars" style="margin-top:6px;"></div>
+      </div>
+      <div class="card" style="display:flex;flex-direction:column;align-items:center;gap:18px;">
+        <div><div class="card-title" style="text-align:center;">Overall Availability</div><div class="card-sub" style="text-align:center;">All hubs combined</div></div>
+        <div class="ring-wrap">
+          <div class="ring">
+            <svg width="110" height="110" viewBox="0 0 110 110">
+              <circle class="ring-bg" cx="55" cy="55" r="43"/>
+              <circle class="ring-fg" cx="55" cy="55" r="43" stroke-dasharray="270.18" stroke-dashoffset="167" />
+            </svg>
+            <div class="ring-txt"><div class="ring-num">38.8%</div><div class="ring-lbl">Available</div></div>
+          </div>
+        </div>
+        <div class="cc" style="height:150px;width:100%;"><canvas id="c-inv-status"></canvas></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Item Inventory — Searchable</div>
+      <div class="card-sub">Full item list with current status, location, and last scan</div>
+      <div class="search-bar" style="margin-top:8px;">
+        <input class="search-input" placeholder="Search by item name, ID, or hub..." oninput="filterInventory(this.value)">
+        <select class="fc" style="width:160px;" onchange="filterInventory('')"><option value="all">All Status</option><option value="available">Available</option><option value="out">Checked Out</option><option value="repair">Under Repair</option><option value="missing">Missing</option></select>
+      </div>
+      <div class="tw">
+        <table>
+          <thead><tr><th>Item ID</th><th>Item Name</th><th>Category</th><th>Hub</th><th>Status</th><th>Last Scan</th><th>Last Patron</th></tr></thead>
+          <tbody id="inv-table-body"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ PAGE: ITEM HISTORY ══════════════════════════════════════ -->
+  <div class="page page-content" id="pg-history">
+    <div class="ph">
+      <div><div class="page-title">Item History</div><div class="page-sub">Full QR scan log for any item — search by Item ID or scan the barcode</div></div>
+    </div>
+
+    <div class="g21" style="margin-bottom:0;">
+
+      <!-- Search panel -->
+      <div>
+        <div class="card" style="margin-bottom:16px;">
+          <div class="card-title">Search Item Record</div>
+          <div class="card-sub">Enter an Item ID or scan its QR code</div>
+          <div style="display:flex;gap:8px;margin-bottom:16px;">
+            <input class="search-input" id="hist-search" placeholder="e.g. BB-0472" value="BB-0472" style="flex:1;">
+            <button class="btn btn-dark" onclick="loadHistory()">Search</button>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;" id="hist-meta">
+            <div style="background:var(--bg);border-radius:6px;padding:11px;">
+              <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:3px;">Item</div>
+              <div style="font-size:13px;font-weight:700;">Camping Tent</div>
+            </div>
+            <div style="background:var(--bg);border-radius:6px;padding:11px;">
+              <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:3px;">Current Status</div>
+              <div style="font-size:13px;font-weight:700;">Available</div>
+            </div>
+            <div style="background:var(--bg);border-radius:6px;padding:11px;">
+              <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:3px;">Hub</div>
+              <div style="font-size:13px;font-weight:700;">Hub 6 — Annex</div>
+            </div>
+            <div style="background:var(--bg);border-radius:6px;padding:11px;">
+              <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:3px;">Total Loans</div>
+              <div style="font-size:13px;font-weight:700;">14 loans</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">Condition Score Over Time</div>
+          <div class="card-sub">How condition has changed across each loan</div>
+          <div class="cc" style="height:180px;"><canvas id="c-hist-cond"></canvas></div>
+        </div>
+      </div>
+
+      <!-- Timeline -->
+      <div class="card">
+        <div class="card-title">Full Scan Log — BB-0472</div>
+        <div class="card-sub">Every checkout, return, inspection, and alert recorded by the QR system</div>
+        <div class="tabs" style="margin-top:8px;">
+          <button class="tab active" onclick="swTab('ht-all',this)">All Events</button>
+          <button class="tab" onclick="swTab('ht-issues',this)">Issues Only</button>
+        </div>
+        <div class="tab-panel active" id="ht-all">
+          <div id="hist-timeline"></div>
+        </div>
+        <div class="tab-panel" id="ht-issues">
+          <div id="hist-issues"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /main-area -->
+</div><!-- /app -->
+
 <!-- MODALS -->
-<!-- ═══════════════════════════════════════════════════ -->
-
-<!-- New Reservation Modal -->
-<div class="modal-overlay" id="modal-new-res">
-  <div class="modal">
-    <button class="modal-close" onclick="closeModal('modal-new-res')">✕</button>
-    <div class="modal-title">+ New Reservation</div>
-    <p style="font-size:0.85rem;color:var(--muted);margin-bottom:20px;">Enter patron and item details. The ML engine will score this reservation automatically.</p>
-    <div class="form-grid">
-      <div class="form-group"><label class="form-label">Patron ID</label><input class="form-input" placeholder="e.g. 3655" id="nr-patron"></div>
-      <div class="form-group"><label class="form-label">Hub</label><select class="form-input" id="nr-hub">
-        <option>Hub 1 — Downtown</option><option>Hub 2 — Scarborough</option><option>Hub 3 — North York</option>
-        <option>Hub 4 — Etobicoke</option><option>Hub 5 — Yorkdale</option><option>Hub 6 — Annex ⚠️</option>
-      </select></div>
-    </div>
-    <div class="form-grid">
-      <div class="form-group"><label class="form-label">Item Category</label><select class="form-input" id="nr-cat"><option>🔧 Tools</option><option>⚽ Sports</option><option>⛺ Camping</option></select></div>
-      <div class="form-group"><label class="form-label">Time Slot</label><select class="form-input" id="nr-slot"><option>🌅 Morning</option><option>☀️ Afternoon</option><option>🌆 Evening</option></select></div>
-    </div>
-    <div class="form-group"><label class="form-label">Pickup Date</label><input class="form-input" type="date" id="nr-date"></div>
-    <div style="display:flex;gap:10px;margin-top:8px;">
-      <button class="btn btn-primary" onclick="submitNewReservation()" style="flex:1;">🤖 Score & Submit</button>
-      <button class="btn btn-outline" onclick="closeModal('modal-new-res')" style="color:var(--muted);border-color:#e2e8f0;">Cancel</button>
-    </div>
+<div class="modal-bg" id="modal-newres" onclick="if(event.target===this)closeModal('modal-newres')">
+  <div class="modal-box">
+    <div class="modal-hd"><div class="modal-title">New Walk-In Reservation</div><button class="modal-close" onclick="closeModal('modal-newres')">&#x2715;</button></div>
+    <div class="fr"><div class="fg"><label class="fl">Patron ID</label><input class="fc" placeholder="P-XXXX"></div><div class="fg"><label class="fl">Patron Name</label><input class="fc" placeholder="Full name"></div></div>
+    <div class="fg"><label class="fl">Item ID / QR Scan</label><input class="fc" placeholder="BB-XXXX or scan QR"></div>
+    <div class="fr"><div class="fg"><label class="fl">Pickup Date</label><input class="fc" type="date"></div><div class="fg"><label class="fl">Return Date</label><input class="fc" type="date"></div></div>
+    <div style="display:flex;gap:9px;margin-top:6px;"><button class="btn btn-dark" style="flex:1;" onclick="closeModal('modal-newres');toast('Walk-in reservation created and scanned out')">Create and Scan Out</button><button class="btn btn-outline" onclick="closeModal('modal-newres')">Cancel</button></div>
   </div>
 </div>
 
-<!-- Hub Detail Modal -->
-<div class="modal-overlay" id="modal-hub">
-  <div class="modal" style="max-width:480px;">
-    <button class="modal-close" onclick="closeModal('modal-hub')">✕</button>
-    <div id="hub-modal-content"></div>
-  </div>
-</div>
-
-<!-- Flow Detail Modal -->
-<div class="modal-overlay" id="modal-flow">
-  <div class="modal">
-    <button class="modal-close" onclick="closeModal('modal-flow')">✕</button>
-    <div id="flow-modal-content"></div>
-  </div>
-</div>
-
-<!-- Notification -->
-<div class="notif" id="notif">
-  <span class="notif-icon" id="notif-icon">✅</span>
-  <span id="notif-msg">Action completed</span>
-</div>
-
+<div class="toast" id="toast"><span id="tmsg"></span></div>
 
 <script>
-// ═══════════════════════════════════════════════════
-// DATA
-// ═══════════════════════════════════════════════════
-
-const reservations = [
-  {id:'R-1001',patron:'P-3655',hub:'Hub 6',item:'Camping Tent',cat:'camping',pickup:'Morning',date:'Apr 1',lead:12,prior:1,reminder:true,score:0.41,level:'low'},
-  {id:'R-1002',patron:'P-4796',hub:'Hub 11',item:'Power Drill',cat:'tools',pickup:'Morning',date:'Apr 1',lead:21,prior:0,reminder:true,score:0.31,level:'low'},
-  {id:'R-1003',patron:'P-3339',hub:'Hub 7',item:'Tennis Racket',cat:'sports',pickup:'Morning',date:'Apr 2',lead:29,prior:3,reminder:false,score:0.78,level:'high'},
-  {id:'R-1004',patron:'P-4932',hub:'Hub 6',item:'Hand Saw',cat:'tools',pickup:'Afternoon',date:'Apr 2',lead:9,prior:0,reminder:true,score:0.22,level:'low'},
-  {id:'R-1005',patron:'P-1890',hub:'Hub 11',item:'Sleeping Bag',cat:'camping',pickup:'Afternoon',date:'Apr 3',lead:27,prior:0,reminder:true,score:0.28,level:'low'},
-  {id:'R-1006',patron:'P-3778',hub:'Hub 4',item:'Camping Stove',cat:'camping',pickup:'Morning',date:'Apr 3',lead:17,prior:0,reminder:false,score:0.49,level:'medium'},
-  {id:'R-1007',patron:'P-2823',hub:'Hub 6',item:'Soccer Ball',cat:'sports',pickup:'Afternoon',date:'Apr 4',lead:29,prior:0,reminder:true,score:0.32,level:'low'},
-  {id:'R-1008',patron:'P-4901',hub:'Hub 1',item:'Basketball',cat:'sports',pickup:'Evening',date:'Apr 4',lead:14,prior:1,reminder:false,score:0.45,level:'medium'},
-  {id:'R-1009',patron:'P-2822',hub:'Hub 10',item:'Basketball Hoop',cat:'sports',pickup:'Evening',date:'Apr 5',lead:9,prior:0,reminder:true,score:0.31,level:'low'},
-  {id:'R-1010',patron:'P-1279',hub:'Hub 2',item:'Ladder',cat:'tools',pickup:'Afternoon',date:'Apr 5',lead:22,prior:4,reminder:false,score:0.88,level:'high'},
-  {id:'R-1011',patron:'P-3499',hub:'Hub 4',item:'Tent',cat:'camping',pickup:'Morning',date:'Apr 6',lead:7,prior:1,reminder:true,score:0.39,level:'low'},
-  {id:'R-1012',patron:'P-4662',hub:'Hub 4',item:'Kayak Paddle',cat:'sports',pickup:'Evening',date:'Apr 6',lead:7,prior:4,reminder:true,score:0.71,level:'high'},
+// ── DATA ──────────────────────────────────────────────────────
+const ALERTS_CRIT=[
+  {id:'BB-0133',name:'Coleman Tent 6P',patron:'P-2291 — B. Osei',hub:'Hub 3',due:'Feb 12',days:47,contact:'Mar 1'},
+  {id:'BB-0087',name:'Power Drill Set',patron:'P-3412 — D. Russo',hub:'Hub 6',due:'Feb 18',days:41,contact:'Mar 5'},
+  {id:'BB-0261',name:'Sleeping Bag -20C',patron:'P-1884 — S. Patel',hub:'Hub 9',due:'Feb 22',days:37,contact:'Mar 8'},
+  {id:'BB-0398',name:'Kayak Paddle Pair',patron:'P-4550 — J. Kim',hub:'Hub 2',due:'Mar 1',days:30,contact:'Mar 15'},
+];
+const ALERTS_WARN=[
+  {id:'BB-0445',name:'Soccer Ball Pro',patron:'P-3201 — A. Costa',hub:'Hub 6',due:'Mar 14',days:17,contact:'Mar 20'},
+  {id:'BB-0192',name:'Camping Stove',patron:'P-2778 — L. Ahmed',hub:'Hub 1',due:'Mar 16',days:15,contact:'Mar 21'},
+  {id:'BB-0507',name:'Extension Ladder',patron:'P-4103 — M. Santos',hub:'Hub 8',due:'Mar 18',days:13,contact:'Mar 22'},
+  {id:'BB-0334',name:'Tennis Racket Set',patron:'P-1659 — N. Brown',hub:'Hub 11',due:'Mar 20',days:11,contact:'Mar 24'},
+];
+const ALL_ALERTS=[...ALERTS_CRIT,...ALERTS_WARN,
+  {id:'BB-0619',name:'Basketball',patron:'P-2034',hub:'Hub 4',due:'Mar 22',days:9,contact:'Mar 25'},
+  {id:'BB-0271',name:'Hand Saw',patron:'P-3887',hub:'Hub 7',due:'Mar 23',days:8,contact:'Mar 26'},
+  {id:'BB-0482',name:'Hoop Stand',patron:'P-1120',hub:'Hub 10',due:'Mar 24',days:7,contact:'Mar 26'},
 ];
 
-const hubs = [
-  {id:1,name:'Downtown Core',noshow:24,blocked:4,score:0.24,risk:'low',total:180},
-  {id:2,name:'Scarborough East',noshow:31,blocked:6,score:0.31,risk:'low',total:160},
-  {id:3,name:'North York',noshow:38,blocked:9,score:0.52,risk:'medium',total:145},
-  {id:4,name:'Etobicoke',noshow:29,blocked:5,score:0.29,risk:'low',total:170},
-  {id:5,name:'Yorkdale',noshow:26,blocked:4,score:0.26,risk:'low',total:155},
-  {id:6,name:'Annex',noshow:42,blocked:11,score:0.71,risk:'high',total:140},
-  {id:7,name:'Danforth',noshow:28,blocked:5,score:0.28,risk:'low',total:165},
-  {id:8,name:'Roncesvalles',noshow:33,blocked:7,score:0.38,risk:'medium',total:150},
-  {id:9,name:'St. Clair West',noshow:36,blocked:8,score:0.47,risk:'medium',total:148},
-  {id:10,name:'Leslieville',noshow:22,blocked:3,score:0.22,risk:'low',total:175},
-  {id:11,name:'Junction',noshow:30,blocked:6,score:0.30,risk:'low',total:162},
-  {id:12,name:'Riverdale',noshow:27,blocked:4,score:0.27,risk:'low',total:158},
+const INV_ITEMS=[
+  {id:'BB-0472',name:'Camping Tent',cat:'Camping',hub:'Hub 6',status:'available',scan:'Apr 1 11:22',patron:'—'},
+  {id:'BB-0391',name:'Power Drill',cat:'Tools',hub:'Hub 6',status:'out',scan:'Apr 1 08:14',patron:'P-4796'},
+  {id:'BB-0142',name:'Kayak Paddle',cat:'Sports',hub:'Hub 6',status:'out',scan:'Apr 1 09:32',patron:'P-4662'},
+  {id:'BB-0204',name:'Camping Stove',cat:'Camping',hub:'Hub 6',status:'repair',scan:'Apr 1 08:45',patron:'—'},
+  {id:'BB-0077',name:'Extension Ladder',cat:'Tools',hub:'Hub 6',status:'missing',scan:'Mar 10',patron:'P-1279'},
+  {id:'BB-0318',name:'Hand Saw',cat:'Tools',hub:'Hub 6',status:'available',scan:'Apr 1 09:10',patron:'—'},
+  {id:'BB-0455',name:'Basketball',cat:'Sports',hub:'Hub 6',status:'repair',scan:'Apr 1 10:50',patron:'—'},
+  {id:'BB-0289',name:'Soccer Ball',cat:'Sports',hub:'Hub 6',status:'out',scan:'Apr 1 10:05',patron:'P-2823'},
+  {id:'BB-0517',name:'Sleeping Bag',cat:'Camping',hub:'Hub 6',status:'out',scan:'Apr 1 11:18',patron:'P-1890'},
+  {id:'BB-0102',name:'Wrench Set',cat:'Tools',hub:'Hub 5',status:'available',scan:'Mar 30',patron:'—'},
+  {id:'BB-0338',name:'Tennis Racket',cat:'Sports',hub:'Hub 3',status:'missing',scan:'Feb 22',patron:'P-1884'},
+  {id:'BB-0419',name:'Camping Chair',cat:'Camping',hub:'Hub 9',status:'available',scan:'Mar 29',patron:'—'},
 ];
 
-const flowDetails = {
-  1:{icon:'📱',title:'Step 1: Patron Books',desc:'A Toronto resident opens the BorrowBox mobile app. They browse available gear by category (Tools, Sports, Camping) and select an item at their nearest hub. They choose a pickup date and time slot (Morning, Afternoon, or Evening). The reservation is saved to the MySQL database and immediately queued for ML scoring.',detail:'Data captured: Patron ID, Hub ID, Item ID, Category, Reservation Date, Pickup Date, Time Slot. Lead time is auto-calculated.'},
-  2:{icon:'🤖',title:'Step 2: ML Engine Scores the Reservation',desc:'The Random Forest model instantly scores the reservation using 6 key features: (1) Reservation Lead Time Days, (2) Patron\'s Prior No-Show Count, (3) Hub ID, (4) Pickup Time Slot, (5) Reminder Sent status, (6) Weather Score forecast. Output: a risk score from 0.00 to 1.00.',detail:'Scores above 0.60 are flagged HIGH RISK. 0.40–0.60 = MEDIUM. Below 0.40 = LOW. The model achieves AUC 0.82 on test data.'},
-  3:{icon:'🔔',title:'Step 3: Alert Triggered',desc:'If the ML risk score exceeds the threshold (0.60), the reminder service automatically sends a notification to the patron 24–48 hours before the pickup deadline. The notification reminds them of their reservation and invites them to confirm or cancel.',detail:'Research shows reminders reduce no-shows by 10–15%. For the BorrowBox system, this single intervention is projected to recover approximately 73–109 reservations per 2,500 that would otherwise be no-shows.'},
-  4:{icon:'👷',title:'Step 4: Staff Acts',desc:'Hub staff see the flagged reservation on their real-time dashboard. They can see which reservations are high risk TODAY before spending 28 minutes preparing the item. They can choose to delay preparation until the reminder response is received, or call the patron directly for high-priority items.',detail:'This transforms staff workflow from reactive (finding out after the deadline) to proactive (knowing 24–48 hours before). Estimated time saved: 25% reduction in wasted preparation time.'},
-  5:{icon:'📊',title:'Step 5: Outcome Logged & Model Updates',desc:'When the pickup deadline arrives, the actual outcome is recorded: did the patron show up? The blocked hours and staff prep time are logged. This outcome data feeds back into the model training pipeline, allowing the model to continuously improve as more real-world data accumulates.',detail:'This creates a virtuous learning loop. Over time, the model\'s predictions become more accurate for BorrowBox-specific patterns, surpassing the initial AUC of 0.82.'},
-};
+const HIST_EVENTS=[
+  {type:'scan-in',title:'Returned — Good Condition',sub:'Patron P-3655 — Arjun Mehta · Hub 6 · Scanned in by staff JM',time:'Apr 1, 11:22'},
+  {type:'scan-out',title:'Checked Out to Patron',sub:'Patron P-3655 — Arjun Mehta · 3-day loan · Due Apr 4',time:'Mar 29, 09:14'},
+  {type:'scan-in',title:'Returned — Minor Wear',sub:'Patron P-2108 — K. Williams · Hub 6 · Wear noted on zipper',time:'Mar 28, 14:05'},
+  {type:'overdue',title:'Overdue Alert Triggered',sub:'Patron P-2108 — Item 2 days past due. Auto-reminder dispatched.',time:'Mar 27, 08:00'},
+  {type:'scan-out',title:'Checked Out to Patron',sub:'Patron P-2108 — K. Williams · 5-day loan · Due Mar 25',time:'Mar 20, 10:30'},
+  {type:'scan-in',title:'Returned — Good Condition',sub:'Patron P-4401 — L. Johansson · Hub 6 · No issues',time:'Mar 19, 15:45'},
+  {type:'scan-out',title:'Checked Out to Patron',sub:'Patron P-4401 — L. Johansson · 3-day loan · Due Mar 19',time:'Mar 16, 11:00'},
+  {type:'scan-in',title:'Condition Inspection — Post Repair',sub:'Staff inspection after stitch repair. Returned to Available.',time:'Mar 14, 09:00'},
+  {type:'overdue',title:'Damage Logged on Return',sub:'Patron P-0912 — Torn seam on tent body. Sent for repair.',time:'Mar 12, 16:20'},
+  {type:'scan-in',title:'Returned — Damaged',sub:'Patron P-0912 — R. Okonkwo · Torn seam reported.',time:'Mar 12, 16:18'},
+];
+const HIST_ISSUES=HIST_EVENTS.filter(e=>e.type==='overdue');
 
-const heatmapData = {
-  1:{m:18,a:22,e:20},{2:{m:25,a:28,e:30}},{3:{m:38,a:29,e:33}},{4:{m:22,a:25,e:27}},
-  5:{m:20,a:23,e:26},{6:{m:100,a:38,e:42}},{7:{m:24,a:27,e:29}},{8:{m:30,a:33,e:35}},
-  9:{m:36,a:31,e:34},{10:{m:19,a:21,e:24}},{11:{m:27,a:29,e:31}},{12:{m:22,a:24,e:27}},
-};
+// ── RENDER ALERTS ─────────────────────────────────────────────
+function renderAlerts(){
+  document.getElementById('alert-list-critical').innerHTML=ALERTS_CRIT.map(a=>`
+    <div class="alert-item critical">
+      <div class="alert-sev sev-crit">${a.days}d</div>
+      <div class="alert-info">
+        <div class="alert-title">${a.name} <span class="mono" style="font-size:11px;color:var(--muted);">${a.id}</span></div>
+        <div class="alert-sub">${a.patron} &middot; ${a.hub} &middot; Due ${a.due}</div>
+      </div>
+      <button class="btn btn-dark btn-xs" onclick="toast('Escalation sent for ${a.id}')">Escalate</button>
+    </div>`).join('');
 
-// ═══════════════════════════════════════════════════
-// NAVIGATION
-// ═══════════════════════════════════════════════════
-function showPage(name) {
-  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
-  document.getElementById('page-' + name).classList.add('active');
-  const tabs = document.querySelectorAll('.nav-tab');
-  const idx = ['story','solution','reservations','hubs','model'].indexOf(name);
-  if(idx >= 0) tabs[idx].classList.add('active');
-  window.scrollTo({top:0,behavior:'smooth'});
+  document.getElementById('alert-list-warning').innerHTML=ALERTS_WARN.map(a=>`
+    <div class="alert-item warning">
+      <div class="alert-sev sev-warn">${a.days}d</div>
+      <div class="alert-info">
+        <div class="alert-title">${a.name} <span class="mono" style="font-size:11px;color:var(--muted);">${a.id}</span></div>
+        <div class="alert-sub">${a.patron} &middot; ${a.hub} &middot; Due ${a.due}</div>
+      </div>
+      <button class="btn btn-outline btn-xs" onclick="toast('Reminder sent for ${a.id}')">Remind</button>
+    </div>`).join('');
+
+  document.getElementById('alert-table-body').innerHTML=ALL_ALERTS.map(a=>`
+    <tr>
+      <td class="mono">${a.id}</td><td>${a.name}</td><td style="font-size:12px;">${a.patron}</td><td>${a.hub}</td>
+      <td class="mono">${a.due}</td>
+      <td><span class="pill ${a.days>30?'p-bad':'p-dmg'}">${a.days} days</span></td>
+      <td class="mono" style="font-size:11.5px;">${a.contact}</td>
+      <td><button class="btn btn-outline btn-xs" onclick="toast('Reminder sent')">Remind</button></td>
+    </tr>`).join('');
 }
 
-function scrollToStory() {
-  document.getElementById('story-start').scrollIntoView({behavior:'smooth'});
+function filterAlerts(q){
+  q=q.toLowerCase();
+  document.querySelectorAll('#alert-table-body tr').forEach(r=>{
+    r.style.display=r.textContent.toLowerCase().includes(q)?'':'none';
+  });
 }
 
-// ═══════════════════════════════════════════════════
-// FILTERS
-// ═══════════════════════════════════════════════════
-function applyFilters() {
-  const cat = document.getElementById('filter-cat').value;
-  const slot = document.getElementById('filter-slot').value;
-  const reminder = document.getElementById('filter-reminder').value;
-  let count = 2500;
-  if(cat !== 'all') count = Math.floor(count * 0.33);
-  if(slot !== 'all') count = Math.floor(count * 0.34);
-  if(reminder !== 'all') count = Math.floor(count * 0.5);
-  document.getElementById('filter-count').textContent = 'Showing ' + count.toLocaleString() + ' records';
-  showNotif('Filters applied — showing ' + count + ' records', '🔍');
+// ── RENDER INVENTORY ──────────────────────────────────────────
+function statusPill(s){
+  const m={available:'p-avail',out:'p-out',repair:'p-dmg',missing:'p-bad'};
+  const l={available:'Available',out:'Checked Out',repair:'Under Repair',missing:'Missing'};
+  return`<span class="pill ${m[s]}">${l[s]}</span>`;
 }
-function resetFilters() {
-  document.getElementById('filter-cat').value = 'all';
-  document.getElementById('filter-slot').value = 'all';
-  document.getElementById('filter-reminder').value = 'all';
-  document.getElementById('filter-count').textContent = 'Showing 2,500 records';
-  showNotif('Filters reset', '↺');
-}
+function renderInventory(){
+  document.getElementById('inv-table-body').innerHTML=INV_ITEMS.map(i=>`
+    <tr>
+      <td class="mono">${i.id}</td><td style="font-weight:600;">${i.name}</td><td>${i.cat}</td><td>${i.hub}</td>
+      <td>${statusPill(i.status)}</td>
+      <td class="mono" style="font-size:11.5px;">${i.scan}</td>
+      <td style="font-size:12px;color:var(--muted);">${i.patron}</td>
+    </tr>`).join('');
 
-// ═══════════════════════════════════════════════════
-// SCATTER DOTS
-// ═══════════════════════════════════════════════════
-function buildScatter() {
-  const data = [
-    {x:0,y:12.4},{x:2,y:14.1},{x:4,y:18.2},{x:5,y:20.1},{x:7,y:22.8},
-    {x:8,y:23.5},{x:10,y:26.2},{x:12,y:28.4},{x:14,y:30.1},{x:15,y:33.8},
-    {x:17,y:35.2},{x:18,y:36.1},{x:19,y:37.0},{x:20,y:37.5},{x:21,y:36.8},
-    {x:23,y:35.4},{x:25,y:34.9},{x:27,y:34.2},{x:28,y:33.8},{x:30,y:34.2},
+  const hubAvail=[
+    {name:'Hub 10 — Leslieville',v:62},{name:'Hub 12 — Riverdale',v:56},{name:'Hub 5 — Yorkdale',v:53},
+    {name:'Hub 11 — Junction',v:50},{name:'Hub 4 — Etobicoke',v:47},{name:'Hub 7 — Danforth',v:45},
+    {name:'Hub 1 — Downtown',v:42},{name:'Hub 8 — Roncesvalles',v:38},{name:'Hub 2 — Scarborough',v:36},
+    {name:'Hub 9 — St Clair W.',v:34},{name:'Hub 6 — Annex',v:31},{name:'Hub 3 — North York',v:27},
   ];
-  const container = document.getElementById('scatter-chart');
-  const maxY = 45, minY = 0, maxX = 30;
-  data.forEach(d => {
-    const dot = document.createElement('div');
-    dot.className = 'scatter-dot';
-    const xPct = (d.x / maxX) * 100;
-    const yPct = (d.y / maxY) * 100;
-    dot.style.left = xPct + '%';
-    dot.style.bottom = yPct + '%';
-    const risk = d.y > 35 ? '#dc2626' : d.y > 25 ? '#f59e0b' : '#1a7a6e';
-    dot.style.background = risk;
-    dot.style.border = '2px solid white';
-    dot.style.boxShadow = '0 2px 8px rgba(0,0,0,0.2)';
-    dot.title = `Day ${d.x}: ${d.y}% no-show rate`;
-    dot.addEventListener('mouseenter', function() {
-      showNotif(`Day ${d.x} lead time → ${d.y}% no-show rate`, d.y > 35 ? '🔴' : d.y > 25 ? '🟡' : '🟢');
-    });
-    container.appendChild(dot);
+  document.getElementById('hub-avail-bars').innerHTML=hubAvail.map(h=>`
+    <div class="hub-row">
+      <div class="hub-row-name">${h.name.split('—')[0].trim()}</div>
+      <div class="hub-row-bar"><div class="hub-row-fill" style="width:${h.v}%;"></div></div>
+      <div class="hub-row-val">${h.v}%</div>
+    </div>`).join('');
+}
+
+function filterInventory(q){
+  q=q.toLowerCase();
+  const sf=document.querySelector('#pg-inventory select').value;
+  document.querySelectorAll('#inv-table-body tr').forEach(r=>{
+    const txt=r.textContent.toLowerCase();
+    const matchQ=q===''||txt.includes(q);
+    const matchS=sf==='all'||txt.includes(sf==='out'?'checked out':sf==='repair'?'under repair':sf);
+    r.style.display=(matchQ&&matchS)?'':'none';
   });
 }
 
-// ═══════════════════════════════════════════════════
-// HEATMAP
-// ═══════════════════════════════════════════════════
-function buildHeatmap() {
-  const grid = document.getElementById('heatmap-grid');
-  if(!grid) return;
-  for(let hub = 1; hub <= 12; hub++) {
-    const row = document.createElement('div');
-    row.style.cssText = 'display:flex;gap:4px;align-items:center;margin-bottom:4px;';
-    const label = document.createElement('div');
-    label.style.cssText = 'width:64px;text-align:right;font-size:0.7rem;color:var(--muted);font-family:"DM Mono",monospace;font-weight:600;flex-shrink:0;';
-    label.textContent = 'Hub ' + hub;
-    row.appendChild(label);
-    const d = heatmapData[hub];
-    [d.m, d.a, d.e].forEach((val, si) => {
-      const slotName = ['Morning','Afternoon','Evening'][si];
-      const cell = document.createElement('div');
-      cell.className = 'heatmap-cell';
-      cell.style.width = '80px';
-      cell.style.height = '36px';
-      const pct = val / 100;
-      const r = Math.round(209 + (220-209)*pct*3);
-      const g = Math.round(250 - 200*pct);
-      const b = Math.round(250 - 240*pct);
-      cell.style.background = val >= 50 ? `rgba(127,29,29,${0.4+pct*0.6})` : val >= 35 ? `rgba(239,68,68,${0.2+pct*0.5})` : val >= 25 ? `rgba(245,158,11,${0.2+pct*0.4})` : `rgba(110,231,183,${0.3+pct*0.3})`;
-      cell.style.color = val >= 35 ? 'white' : '#0f1f2e';
-      cell.style.fontWeight = '600';
-      cell.textContent = val + '%';
-      cell.onclick = () => {
-        showNotif(`Hub ${hub} ${slotName}: ${val}% no-show rate`, val >= 50 ? '🔴' : val >= 35 ? '⚠️' : '✅');
-        showHubModal(hub);
-      };
-      row.appendChild(cell);
-    });
-    grid.appendChild(row);
-  }
+// ── RENDER HISTORY ────────────────────────────────────────────
+function renderHistory(){
+  const iconFor=t=>t==='scan-in'?'hist-dot':t==='scan-out'?'hist-dot scan-out':'hist-dot overdue';
+  document.getElementById('hist-timeline').innerHTML=HIST_EVENTS.map(e=>`
+    <div class="history-line">
+      <div class="${iconFor(e.type)}"></div>
+      <div class="hist-info">
+        <div class="hist-title">${e.title}</div>
+        <div class="hist-sub">${e.sub}</div>
+      </div>
+      <div class="hist-time">${e.time}</div>
+    </div>`).join('');
+  document.getElementById('hist-issues').innerHTML=HIST_ISSUES.length?HIST_ISSUES.map(e=>`
+    <div class="history-line">
+      <div class="hist-dot overdue"></div>
+      <div class="hist-info"><div class="hist-title">${e.title}</div><div class="hist-sub">${e.sub}</div></div>
+      <div class="hist-time">${e.time}</div>
+    </div>`).join(''):'<div style="font-size:13px;color:var(--muted);padding:16px 0;text-align:center;">No issues found for this item</div>';
 }
 
-// ═══════════════════════════════════════════════════
-// RESERVATION TABLE
-// ═══════════════════════════════════════════════════
-function buildReservationTable() {
-  const tbody = document.getElementById('reservation-tbody');
-  if(!tbody) return;
-  tbody.innerHTML = '';
-  reservations.forEach(r => {
-    const tr = document.createElement('tr');
-    const riskClass = r.level === 'high' ? 'risk-high' : r.level === 'medium' ? 'risk-medium' : 'risk-low';
-    const riskIcon = r.level === 'high' ? '🔴' : r.level === 'medium' ? '🟡' : '🟢';
-    tr.innerHTML = `
-      <td><strong style="font-family:'DM Mono',monospace;">${r.id}</strong></td>
-      <td>${r.patron}</td>
-      <td>${r.hub}</td>
-      <td>${r.item}</td>
-      <td>${r.date} ${r.pickup}</td>
-      <td><span style="font-family:'DM Mono',monospace;">${r.lead}d</span></td>
-      <td><span style="font-family:'DM Mono',monospace;font-weight:700;color:${r.prior >= 2 ? 'var(--red)' : 'var(--navy)'}">${r.prior}x</span></td>
-      <td>
-        <div class="risk-meter">
-          <div class="risk-bar-track" style="width:80px;">
-            <div class="risk-bar-fill" style="width:${r.score*100}%;background:${r.score >= 0.6 ? 'var(--red)' : r.score >= 0.4 ? 'var(--amber)' : 'var(--green)'};"></div>
-          </div>
-          <span style="font-family:'DM Mono',monospace;font-size:0.75rem;">${r.score.toFixed(2)}</span>
-        </div>
-      </td>
-      <td><span class="risk-badge ${riskClass}"><span class="risk-dot"></span>${riskIcon} ${r.level.toUpperCase()}</span></td>
-      <td>
-        <div style="display:flex;gap:6px;">
-          <button class="btn btn-sm" style="background:#eff6ff;color:#1d4ed8;border:none;font-size:0.72rem;" onclick="sendReminder('${r.id}')">📬 Remind</button>
-          ${r.level === 'high' ? `<button class="btn btn-sm btn-red" style="font-size:0.72rem;" onclick="flagReservation('${r.id}')">🚩 Flag</button>` : ''}
-        </div>
-      </td>
-    `;
-    tbody.appendChild(tr);
+function loadHistory(){
+  const v=document.getElementById('hist-search').value.trim()||'BB-0472';
+  toast('Loaded history for '+v);
+}
+
+// ── CHARTS ────────────────────────────────────────────────────
+function buildCharts(){
+  new Chart(document.getElementById('c-inv-status'),{
+    type:'doughnut',
+    data:{labels:['Available','Checked Out','Under Repair','Missing'],
+      datasets:[{data:[38.8,23.4,14.4,23.4],backgroundColor:['#1a1a1a','#555','#ccc','#888'],borderWidth:3,borderColor:'#fff',hoverOffset:3}]},
+    options:{responsive:true,maintainAspectRatio:false,cutout:'60%',
+      plugins:{legend:{position:'bottom',labels:{font:{size:10},padding:8}}}}
   });
 
-  const highBody = document.getElementById('high-risk-tbody');
-  if(highBody) {
-    highBody.innerHTML = '';
-    reservations.filter(r => r.level === 'high').forEach(r => {
-      const tr = document.createElement('tr');
-      tr.innerHTML = `
-        <td><strong style="font-family:'DM Mono',monospace;">${r.id}</strong></td>
-        <td>${r.patron}</td>
-        <td>${r.hub}</td>
-        <td>${r.item}</td>
-        <td>${r.date}</td>
-        <td><span style="font-family:'DM Mono',monospace;font-weight:800;color:var(--red);">${r.score.toFixed(2)}</span></td>
-        <td><span class="risk-badge risk-high"><span class="risk-dot"></span>🔴 HIGH</span></td>
-        <td><div style="display:flex;gap:6px;"><button class="btn btn-sm" style="background:#eff6ff;color:#1d4ed8;border:none;" onclick="sendReminder('${r.id}')">📬 Remind</button><button class="btn btn-sm btn-red" onclick="flagReservation('${r.id}')">🚩 Flag</button></div></td>
-      `;
-      highBody.appendChild(tr);
-    });
-  }
-
-  const todayBody = document.getElementById('today-tbody');
-  if(todayBody) {
-    todayBody.innerHTML = '';
-    reservations.slice(0,5).forEach(r => {
-      const tr = document.createElement('tr');
-      tr.innerHTML = `
-        <td><strong style="font-family:'DM Mono',monospace;">${r.id}</strong></td>
-        <td>${r.patron}</td>
-        <td>${r.hub}</td>
-        <td>${r.pickup}</td>
-        <td><span style="font-family:'DM Mono',monospace;font-weight:800;color:${r.score >= 0.6?'var(--red)':r.score>=0.4?'var(--amber)':'var(--green)'};">${r.score.toFixed(2)}</span></td>
-        <td>${r.reminder ? '<span style="color:var(--green);font-weight:600;">✅ Sent</span>' : '<span style="color:var(--red);">❌ Not sent</span>'}</td>
-        <td><button class="btn btn-sm btn-primary" onclick="sendReminder('${r.id}')">📬 Send Reminder</button></td>
-      `;
-      todayBody.appendChild(tr);
-    });
-  }
-}
-
-// ═══════════════════════════════════════════════════
-// HUB GRID
-// ═══════════════════════════════════════════════════
-function buildHubGrid() {
-  const grid = document.getElementById('hub-grid');
-  if(!grid) return;
-  grid.innerHTML = '';
-  hubs.forEach(h => {
-    const card = document.createElement('div');
-    card.className = 'card';
-    card.style.cssText = 'cursor:pointer;transition:box-shadow 0.2s,transform 0.2s;';
-    card.onmouseenter = () => { card.style.boxShadow='0 8px 24px rgba(0,0,0,0.12)'; card.style.transform='translateY(-2px)'; };
-    card.onmouseleave = () => { card.style.boxShadow=''; card.style.transform=''; };
-    card.onclick = () => showHubModal(h.id);
-    const riskColor = h.risk === 'high' ? 'var(--red)' : h.risk === 'medium' ? 'var(--amber)' : 'var(--green)';
-    const riskIcon = h.risk === 'high' ? '🔴' : h.risk === 'medium' ? '🟡' : '🟢';
-    card.innerHTML = `
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px;">
-        <div>
-          <div style="font-family:'DM Mono',monospace;font-size:0.7rem;color:var(--muted);margin-bottom:2px;">HUB ${h.id}</div>
-          <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:1rem;color:var(--navy);">${h.name}</div>
-        </div>
-        <span class="risk-badge ${h.risk === 'high' ? 'risk-high' : h.risk === 'medium' ? 'risk-medium' : 'risk-low'}">${riskIcon} ${h.risk.toUpperCase()}</span>
-      </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;">
-        <div style="background:#f8faff;border-radius:8px;padding:10px;text-align:center;">
-          <div style="font-family:'Syne',sans-serif;font-size:1.3rem;font-weight:800;color:${riskColor};">${h.noshow}%</div>
-          <div style="font-size:0.65rem;color:var(--muted);font-family:'DM Mono',monospace;">NO-SHOW RATE</div>
-        </div>
-        <div style="background:#f8faff;border-radius:8px;padding:10px;text-align:center;">
-          <div style="font-family:'Syne',sans-serif;font-size:1.3rem;font-weight:800;color:var(--amber);">${h.blocked}</div>
-          <div style="font-size:0.65rem;color:var(--muted);font-family:'DM Mono',monospace;">BLOCKED NOW</div>
-        </div>
-      </div>
-      <div style="font-size:0.75rem;color:var(--muted);margin-bottom:6px;">Risk Score</div>
-      <div class="risk-bar-track" style="margin-bottom:10px;">
-        <div class="risk-bar-fill" style="width:${h.score*100}%;background:${riskColor};"></div>
-      </div>
-      <div style="font-size:0.72rem;color:var(--muted);">${h.total} total reservations · <span style="color:var(--teal);cursor:pointer;">View details →</span></div>
-    `;
-    grid.appendChild(card);
+  new Chart(document.getElementById('c-hist-cond'),{
+    type:'line',
+    data:{labels:['Loan 1','Loan 2','Loan 3','Loan 4','Loan 5','Loan 6','Loan 7','Loan 8'],
+      datasets:[{label:'Condition Score (5=Perfect)',data:[5,5,4,5,4,3,4,5],
+        borderColor:'#1a1a1a',backgroundColor:'rgba(0,0,0,.05)',fill:true,tension:.3,
+        pointRadius:4,pointBackgroundColor:'#1a1a1a',borderWidth:2}]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false}},
+      scales:{x:{grid:{display:false}},y:{min:1,max:5,grid:{color:'rgba(0,0,0,.05)'},
+        ticks:{callback:v=>{const m={1:'Unusable',2:'Bad',3:'Worn',4:'Good',5:'Perfect'};return m[v]||''}}}}}
   });
 }
 
-// ═══════════════════════════════════════════════════
-// ML PREDICTION
-// ═══════════════════════════════════════════════════
-function updatePrediction() {
-  const hub = parseInt(document.getElementById('ml-hub').value);
-  const lead = parseInt(document.getElementById('ml-lead').value);
-  const prior = parseInt(document.getElementById('ml-prior').value);
-  const weather = parseFloat(document.getElementById('ml-weather').value) / 10;
-  const reminder = document.querySelector('input[name="ml-reminder"]:checked').value;
-  const slot = document.getElementById('ml-slot').value;
-
-  let score = 0;
-  score += lead * 0.012;
-  score += prior * 0.14;
-  score += weather * 0.08;
-  if(reminder === '0') score += 0.12;
-  if(hub === 6) score += 0.15;
-  if(slot === 'morning' && hub === 6) score += 0.10;
-  score = Math.min(0.97, Math.max(0.04, score));
-
-  // Update circle
-  const circle = document.getElementById('score-circle');
-  const circumference = 326.7;
-  const offset = circumference - (score * circumference);
-  circle.style.strokeDashoffset = offset;
-  const c = score >= 0.6 ? '#dc2626' : score >= 0.4 ? '#f59e0b' : '#1a7a6e';
-  circle.style.stroke = c;
-
-  document.getElementById('score-display').textContent = score.toFixed(2);
-  document.getElementById('score-display').style.color = c;
-
-  const label = document.getElementById('risk-label-big');
-  const desc = document.getElementById('risk-desc');
-  const actionBtn = document.getElementById('risk-action-btn');
-
-  if(score >= 0.6) {
-    label.textContent = '🔴 HIGH RISK';
-    label.style.color = 'var(--red)';
-    desc.textContent = 'This reservation has a high probability of no-show. Automatically flagged. Send reminder immediately and hold preparation until confirmation received.';
-    actionBtn.innerHTML = '<button class="btn btn-red btn-sm" onclick="showNotif(\'🚨 High-risk alert sent to hub staff!\',\'🔴\')">🚨 Send Urgent Alert</button>';
-  } else if(score >= 0.4) {
-    label.textContent = '🟡 MEDIUM RISK';
-    label.style.color = 'var(--amber)';
-    desc.textContent = 'Moderate no-show risk. Consider sending a reminder notification 48 hours before pickup deadline.';
-    actionBtn.innerHTML = '<button class="btn btn-amber btn-sm" style="color:var(--navy);" onclick="showNotif(\'📬 Reminder scheduled\',\'✅\')">📬 Schedule Reminder</button>';
-  } else {
-    label.textContent = '🟢 LOW RISK';
-    label.style.color = 'var(--green)';
-    desc.textContent = 'This reservation has low no-show probability. Standard processing recommended. No intervention needed.';
-    actionBtn.innerHTML = '<span class="tag tag-teal">✅ No action needed</span>';
-  }
-
-  // Feature bars
-  const features = [
-    {name:'Prior No-Shows', val: Math.min(1, prior/6), raw: prior + ' previous'},
-    {name:'Lead Time', val: lead/30, raw: lead + ' days'},
-    {name:'Reminder Sent', val: reminder==='0' ? 0.7 : 0.1, raw: reminder==='1'?'Yes ↓ reduces risk':'No ↑ increases risk'},
-    {name:'Weather Score', val: weather, raw: weather.toFixed(1)},
-    {name:'Hub Risk Factor', val: hub===6?0.9:hub===3?0.6:hub===9?0.5:0.2, raw: 'Hub '+hub},
-  ];
-  const fBars = document.getElementById('feature-bars');
-  fBars.innerHTML = '';
-  features.forEach(f => {
-    const color = f.val > 0.6 ? 'var(--red)' : f.val > 0.35 ? 'var(--amber)' : 'var(--green)';
-    fBars.innerHTML += `
-      <div style="margin-bottom:10px;">
-        <div style="display:flex;justify-content:space-between;font-size:0.8rem;margin-bottom:4px;">
-          <span style="font-weight:500;">${f.name}</span>
-          <span style="font-family:'DM Mono',monospace;font-size:0.75rem;color:var(--muted);">${f.raw}</span>
-        </div>
-        <div class="risk-bar-track"><div class="risk-bar-fill" style="width:${f.val*100}%;background:${color};"></div></div>
-      </div>
-    `;
-  });
+// ── SCAN SIMULATION ───────────────────────────────────────────
+let scanState={out:'idle',in:'idle'};
+function simulateScan(dir){
+  if(scanState[dir]==='done') return;
+  const sz=document.getElementById('sz-'+dir);
+  const icon=document.getElementById('sz-'+dir+'-icon');
+  const scanning=document.getElementById('sz-'+dir+'-scanning');
+  const done=document.getElementById('sz-'+dir+'-done');
+  scanState[dir]='scanning';
+  sz.classList.add('scanning');
+  icon.style.display='none';
+  scanning.style.display='block';
+  setTimeout(()=>{
+    scanState[dir]='done';
+    sz.classList.remove('scanning');
+    sz.classList.add('success');
+    scanning.style.display='none';
+    done.style.display='block';
+    const result=document.getElementById('result-'+dir);
+    const form=document.getElementById(dir==='out'?'checkout-form':'return-form');
+    result.classList.remove('hidden');
+    form.style.opacity='1';
+    form.style.pointerEvents='all';
+    toast('QR code scanned — item identified');
+  },1400);
 }
 
-// ═══════════════════════════════════════════════════
-// ACTIONS
-// ═══════════════════════════════════════════════════
-function sendReminder(id) {
-  showNotif('📬 Reminder sent for ' + id + '!', '✅');
-}
-function flagReservation(id) {
-  showNotif('🚩 ' + id + ' flagged as high-risk. Hub staff alerted.', '⚠️');
-}
-
-function openNewReservation() {
-  const today = new Date();
-  const next = new Date(today.setDate(today.getDate()+7));
-  document.getElementById('nr-date').value = next.toISOString().split('T')[0];
-  openModal('modal-new-res');
-}
-function submitNewReservation() {
-  closeModal('modal-new-res');
-  showNotif('✅ Reservation submitted! ML score: 0.61 (HIGH RISK) — reminder auto-scheduled', '🤖');
+function resetScan(dir){
+  scanState[dir]='idle';
+  const sz=document.getElementById('sz-'+dir);
+  sz.classList.remove('scanning','success');
+  document.getElementById('sz-'+dir+'-icon').style.display='block';
+  document.getElementById('sz-'+dir+'-scanning').style.display='none';
+  document.getElementById('sz-'+dir+'-done').style.display='none';
+  const result=document.getElementById('result-'+dir);
+  const form=document.getElementById(dir==='out'?'checkout-form':'return-form');
+  result.classList.add('hidden');
+  form.style.opacity='.4';
+  form.style.pointerEvents='none';
 }
 
-function showHubModal(id) {
-  const h = hubs.find(x => x.id === id);
-  if(!h) return;
-  const c = h.risk === 'high' ? 'var(--red)' : h.risk === 'medium' ? 'var(--amber)' : 'var(--green)';
-  document.getElementById('hub-modal-content').innerHTML = `
-    <div style="font-family:'Syne',sans-serif;font-size:1.3rem;font-weight:800;margin-bottom:4px;">Hub ${h.id} — ${h.name}</div>
-    <div style="font-size:0.82rem;color:var(--muted);margin-bottom:20px;">Detailed performance dashboard</div>
-    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:20px;">
-      <div style="background:#f8faff;border-radius:10px;padding:14px;text-align:center;"><div style="font-family:'Syne',sans-serif;font-size:1.6rem;font-weight:800;color:${c};">${h.noshow}%</div><div style="font-size:0.7rem;color:var(--muted);">No-Show Rate</div></div>
-      <div style="background:#f8faff;border-radius:10px;padding:14px;text-align:center;"><div style="font-family:'Syne',sans-serif;font-size:1.6rem;font-weight:800;color:var(--amber);">${h.blocked}</div><div style="font-size:0.7rem;color:var(--muted);">Blocked Items</div></div>
-      <div style="background:#f8faff;border-radius:10px;padding:14px;text-align:center;"><div style="font-family:'Syne',sans-serif;font-size:1.6rem;font-weight:800;">${h.total}</div><div style="font-size:0.7rem;color:var(--muted);">Total Reservations</div></div>
-    </div>
-    <div style="font-size:0.82rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;">Risk Score</div>
-    <div class="risk-bar-track" style="margin-bottom:16px;height:12px;border-radius:6px;"><div class="risk-bar-fill" style="width:${h.score*100}%;height:100%;background:${c};border-radius:6px;"></div></div>
-    ${h.risk === 'high' ? '<div class="insight-box red-box" style="margin-bottom:16px;">🚨 <span><strong>This hub is at high risk.</strong> Recommend immediate staffing review and targeted patron reminder campaign for all upcoming reservations.</span></div>' : ''}
-    <button class="btn btn-primary" style="width:100%;" onclick="closeModal(\'modal-hub\');showPage(\'reservations\')">📋 View Reservations for This Hub</button>
-  `;
-  openModal('modal-hub');
+function completeCheckout(){
+  toast('Checkout complete — BB-0472 logged to P-3655. Return due '+document.getElementById('co-return').value);
+  resetScan('out');
+}
+function completeReturn(){
+  const cond=document.getElementById('ret-cond').value;
+  if(!cond){toast('Please select a return condition');return;}
+  toast('Return logged — BB-0391 received back. Condition: '+document.getElementById('ret-cond').options[document.getElementById('ret-cond').selectedIndex].text.split(' — ')[0]);
+  resetScan('in');
+}
+function checkCondition(){
+  const v=document.getElementById('ret-cond').value;
+  document.getElementById('damage-section').style.display=(v==='damaged'||v==='missing'||v==='unusable')?'block':'none';
 }
 
-function showFlowDetail(step) {
-  const d = flowDetails[step];
-  document.getElementById('flow-modal-content').innerHTML = `
-    <div style="font-size:2.5rem;margin-bottom:12px;">${d.icon}</div>
-    <div class="modal-title">${d.title}</div>
-    <p style="font-size:0.9rem;color:var(--slate);line-height:1.7;margin-bottom:16px;">${d.desc}</p>
-    <div style="background:#f0fdf9;border:1px solid #6ee7b7;border-radius:10px;padding:14px;font-size:0.83rem;color:var(--teal-dark);">
-      <strong>Technical Detail:</strong><br>${d.detail}
-    </div>
-  `;
-  openModal('modal-flow');
-}
+// ── NAVIGATION ────────────────────────────────────────────────
+const TITLES={'pg-scanout':'Scan Out — Item Checkout','pg-scanin':'Scan In — Item Return',
+  'pg-alerts':'Overdue Alerts','pg-inventory':'Live Inventory','pg-history':'Item History'};
+const STAFF_PAGES=['pg-scanout','pg-scanin'];
 
-// ═══════════════════════════════════════════════════
-// MODAL HELPERS
-// ═══════════════════════════════════════════════════
-function openModal(id) { document.getElementById(id).classList.add('open'); }
-function closeModal(id) { document.getElementById(id).classList.remove('open'); }
-document.querySelectorAll('.modal-overlay').forEach(o => {
-  o.addEventListener('click', e => { if(e.target === o) o.classList.remove('open'); });
-});
-
-// ═══════════════════════════════════════════════════
-// NOTIFICATION
-// ═══════════════════════════════════════════════════
-let notifTimer;
-function showNotif(msg, icon='✅') {
-  const n = document.getElementById('notif');
-  document.getElementById('notif-msg').textContent = msg;
-  document.getElementById('notif-icon').textContent = icon;
-  n.classList.add('show');
-  clearTimeout(notifTimer);
-  notifTimer = setTimeout(() => n.classList.remove('show'), 3200);
-}
-
-// ═══════════════════════════════════════════════════
-// TABS
-// ═══════════════════════════════════════════════════
-function switchTab(btn, tabId) {
-  btn.closest('.tab-group').querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+function nav(btn,pid){
+  document.querySelectorAll('.sb-item').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   btn.classList.add('active');
-  const parent = btn.closest('div').parentElement;
-  parent.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-  document.getElementById(tabId).classList.add('active');
+  document.getElementById(pid).classList.add('active');
+  document.getElementById('topbar-title').textContent=TITLES[pid];
+  // sync view toggle
+  const isStaff=STAFF_PAGES.includes(pid);
+  document.querySelectorAll('.vt-btn').forEach((b,i)=>{b.classList.toggle('active',isStaff?i===0:i===1);});
+  window.scrollTo(0,0);
 }
 
-// ═══════════════════════════════════════════════════
-// BAR TIPS
-// ═══════════════════════════════════════════════════
-function showBarTip(el, msg) {
-  el.style.filter = 'brightness(1.2)';
-  showNotif(msg, '📊');
+function setView(v,btn){
+  document.querySelectorAll('.vt-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  if(v==='staff'){
+    nav(document.querySelectorAll('.sb-item')[0],'pg-scanout');
+  } else {
+    nav(document.querySelectorAll('.sb-item')[2],'pg-alerts');
+  }
 }
-function hideBarTip(el) { el.style.filter = ''; }
 
-// ═══════════════════════════════════════════════════
-// INIT
-// ═══════════════════════════════════════════════════
-document.addEventListener('DOMContentLoaded', () => {
-  buildScatter();
-  buildHeatmap();
-  buildReservationTable();
-  buildHubGrid();
-  updatePrediction();
+// ── TABS ──────────────────────────────────────────────────────
+function swTab(id,btn){
+  document.querySelectorAll('#pg-history .tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('#pg-history .tab-panel').forEach(p=>p.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById(id).classList.add('active');
+}
 
-  // Animate hero stats on load
-  setTimeout(() => {
-    const statEl = document.getElementById('stat-noshowrate');
-    if(statEl) {
-      let val = 0;
-      const interval = setInterval(() => {
-        val += 1.2;
-        if(val >= 29.2) { val = 29.2; clearInterval(interval); }
-        statEl.textContent = val.toFixed(1) + '%';
-      }, 30);
-    }
-  }, 600);
+// ── MODAL ─────────────────────────────────────────────────────
+function openModal(id){document.getElementById(id).classList.add('open');}
+function closeModal(id){document.getElementById(id).classList.remove('open');}
+
+// ── TOAST ─────────────────────────────────────────────────────
+let tt;
+function toast(msg){
+  const e=document.getElementById('toast');
+  document.getElementById('tmsg').textContent=msg;
+  e.classList.add('show');
+  clearTimeout(tt);tt=setTimeout(()=>e.classList.remove('show'),3000);
+}
+
+// ── DATES ─────────────────────────────────────────────────────
+function setDates(){
+  const today=new Date(),ret=new Date();
+  ret.setDate(today.getDate()+3);
+  const fmt=d=>d.toISOString().split('T')[0];
+  const cd=document.getElementById('co-date');
+  const cr=document.getElementById('co-return');
+  if(cd)cd.value=fmt(today);
+  if(cr)cr.value=fmt(ret);
+}
+
+// ── INIT ──────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded',()=>{
+  renderAlerts();
+  renderInventory();
+  renderHistory();
+  buildCharts();
+  setDates();
 });
 </script>
 </body>
